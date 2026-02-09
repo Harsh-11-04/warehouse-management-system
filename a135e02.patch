@@ -1,0 +1,2285 @@
+From a135e02ef7cdca8942869c3cb875cf17ad68c9c2 Mon Sep 17 00:00:00 2001
+From: HARSHINT <harshpawar7006574203@gmail.com>
+Date: Fri, 20 Feb 2026 23:01:35 +0530
+Subject: [PATCH] update frontend changes
+
+---
+ frontend/src/layout/MainLayout.tsx            |  65 +++---
+ frontend/src/pages/ActivityLogs/index.tsx     |  85 +++++++
+ frontend/src/pages/Home/index.tsx             | 151 ++++++++++++-
+ frontend/src/pages/Locations/index.tsx        | 118 ++++++++++
+ frontend/src/pages/Picking/index.tsx          | 200 +++++++++++++++++
+ frontend/src/pages/Products/index.tsx         | 164 ++++++++++++++
+ frontend/src/pages/Reports/index.tsx          | 149 +++++++++++++
+ frontend/src/pages/Shipments/index.tsx        | 209 ++++++++++++++++++
+ frontend/src/pages/StockAssign/index.tsx      | 141 ++++++++++++
+ frontend/src/pages/Warehouse/index.tsx        | 118 ++++++++++
+ frontend/src/pages/WarehouseStock/index.tsx   | 120 ++++++++++
+ frontend/src/provider/Route.tsx               |  63 +++++-
+ frontend/src/provider/Store.tsx               |  30 ++-
+ .../src/provider/queries/ActivityLog.query.ts |  21 ++
+ .../src/provider/queries/Product.query.ts     |  80 +++++++
+ frontend/src/provider/queries/Report.query.ts |  56 +++++
+ .../src/provider/queries/Shipment.query.ts    |  80 +++++++
+ .../provider/queries/StockLocation.query.ts   |  82 +++++++
+ .../src/provider/queries/Warehouse.query.ts   | 125 +++++++++++
+ 19 files changed, 2013 insertions(+), 44 deletions(-)
+ create mode 100644 frontend/src/pages/ActivityLogs/index.tsx
+ create mode 100644 frontend/src/pages/Locations/index.tsx
+ create mode 100644 frontend/src/pages/Picking/index.tsx
+ create mode 100644 frontend/src/pages/Products/index.tsx
+ create mode 100644 frontend/src/pages/Reports/index.tsx
+ create mode 100644 frontend/src/pages/Shipments/index.tsx
+ create mode 100644 frontend/src/pages/StockAssign/index.tsx
+ create mode 100644 frontend/src/pages/Warehouse/index.tsx
+ create mode 100644 frontend/src/pages/WarehouseStock/index.tsx
+ create mode 100644 frontend/src/provider/queries/ActivityLog.query.ts
+ create mode 100644 frontend/src/provider/queries/Product.query.ts
+ create mode 100644 frontend/src/provider/queries/Report.query.ts
+ create mode 100644 frontend/src/provider/queries/Shipment.query.ts
+ create mode 100644 frontend/src/provider/queries/StockLocation.query.ts
+ create mode 100644 frontend/src/provider/queries/Warehouse.query.ts
+
+diff --git a/frontend/src/layout/MainLayout.tsx b/frontend/src/layout/MainLayout.tsx
+index 10a4529..2d1f89e 100644
+--- a/frontend/src/layout/MainLayout.tsx
++++ b/frontend/src/layout/MainLayout.tsx
+@@ -1,43 +1,58 @@
+- 
+-import { Sidebar, Menu, MenuItem  } from 'react-pro-sidebar';
++
++import { Sidebar, Menu, MenuItem, SubMenu } from 'react-pro-sidebar';
+ import { useDispatch, useSelector } from 'react-redux';
+ import { SidebarSlicePath, toggleSidebar } from '../provider/slice/Sidebar.slice';
+-import { MdOutlineSpaceDashboard } from "react-icons/md"; 
++import { MdOutlineSpaceDashboard } from "react-icons/md";
+ import { FiUser } from "react-icons/fi";
+ import { IoIosArrowDropright, IoIosArrowDropleft } from "react-icons/io";
+ import { FiBox } from "react-icons/fi";
++import { BsBoxes } from "react-icons/bs";
++import { LuWarehouse } from "react-icons/lu";
++import { TbMapPin } from "react-icons/tb";
++import { MdOutlineAssignment } from "react-icons/md";
++import { BiTransfer } from "react-icons/bi";
++import { TbTruckDelivery, TbReportAnalytics, TbActivity } from "react-icons/tb";
+ import { Link } from 'react-router-dom';
+-const MainLayout = ({ children }:{children:React.ReactNode}) => {
+-    const selector = useSelector(SidebarSlicePath) 
+-    const dispatch = useDispatch()
+-  
++const MainLayout = ({ children }: { children: React.ReactNode }) => {
++  const selector = useSelector(SidebarSlicePath)
++  const dispatch = useDispatch()
++
+ 
+ 
+   return (
+     <>
+-    
+-                    <div className="flex items-start lg:gap-x-2">
+-              <Sidebar collapsed={selector.collapsed} breakPoint="lg" toggled={selector.toggle} >
+-                  <Menu >
+-                      {/* <SubMenu  label="Charts">
+-                          <MenuItem> Pie charts </MenuItem>
+-                          <MenuItem> Line charts </MenuItem>
+-                      </SubMenu> */}
+-                      <MenuItem className="lg:hidden" onClick={() => dispatch(toggleSidebar())} > {selector.toggle ? <IoIosArrowDropright className="text-2xl" />:<IoIosArrowDropleft className="text-2xl" />} </MenuItem>
+-
+-                      <MenuItem component={<Link to="/" />} icon={<MdOutlineSpaceDashboard  className="text-2xl" />} > Dashboard </MenuItem>
+-        
++
++      <div className="flex items-start lg:gap-x-2">
++        <Sidebar collapsed={selector.collapsed} breakPoint="lg" toggled={selector.toggle} >
++          <Menu >
++            <MenuItem className="lg:hidden" onClick={() => dispatch(toggleSidebar())} > {selector.toggle ? <IoIosArrowDropright className="text-2xl" /> : <IoIosArrowDropleft className="text-2xl" />} </MenuItem>
++
++            <MenuItem component={<Link to="/" />} icon={<MdOutlineSpaceDashboard className="text-2xl" />} > Dashboard </MenuItem>
++
+             <MenuItem component={<Link to="/orders" />} icon={<FiBox className="text-2xl" />}> Orders </MenuItem>
+ 
+             <MenuItem component={<Link to="/user" />} icon={<FiUser className="text-2xl" />} > Users </MenuItem>
+-                  </Menu>
+-              </Sidebar>
+-                                <div className="w-full">
+-                  {children}
+-                                </div>
++
++            <SubMenu label="Warehouse" icon={<LuWarehouse className="text-2xl" />}>
++              <MenuItem component={<Link to="/products" />} icon={<BsBoxes className="text-xl" />}> Products </MenuItem>
++              <MenuItem component={<Link to="/warehouses" />} icon={<LuWarehouse className="text-xl" />}> Warehouses </MenuItem>
++              <MenuItem component={<Link to="/stock-assign" />} icon={<MdOutlineAssignment className="text-xl" />}> Assign / Receive </MenuItem>
++              <MenuItem component={<Link to="/warehouse-stock" />} icon={<TbMapPin className="text-xl" />}> Stock View </MenuItem>
++              <MenuItem component={<Link to="/picking" />} icon={<BiTransfer className="text-xl" />}> Pick / Transfer </MenuItem>
++              <MenuItem component={<Link to="/shipments" />} icon={<TbTruckDelivery className="text-xl" />}> Shipments </MenuItem>
++            </SubMenu>
++
++            <MenuItem component={<Link to="/reports" />} icon={<TbReportAnalytics className="text-2xl" />}> Reports </MenuItem>
++
++            <MenuItem component={<Link to="/activity-logs" />} icon={<TbActivity className="text-2xl" />}> Activity Logs </MenuItem>
++          </Menu>
++        </Sidebar>
++        <div className="w-full">
++          {children}
++        </div>
+ 
+ 
+-                    </div>
++      </div>
+     </>
+   )
+ }
+diff --git a/frontend/src/pages/ActivityLogs/index.tsx b/frontend/src/pages/ActivityLogs/index.tsx
+new file mode 100644
+index 0000000..386e7eb
+--- /dev/null
++++ b/frontend/src/pages/ActivityLogs/index.tsx
+@@ -0,0 +1,85 @@
++import { useState } from 'react'
++import { useGetActivityLogsQuery } from '../../provider/queries/ActivityLog.query'
++import BredCrums from '../../components/BredCrums'
++import { DataTable } from 'primereact/datatable'
++import { Column } from 'primereact/column'
++import { Dropdown } from 'primereact/dropdown'
++import { Button } from 'primereact/button'
++import { Tag } from 'primereact/tag'
++
++const ActivityLogPage = () => {
++    const [page, setPage] = useState(1)
++    const [entity, setEntity] = useState('')
++
++    const { data, isLoading } = useGetActivityLogsQuery({ page, entity })
++
++    const entityOptions = [
++        { label: 'All Entities', value: '' },
++        { label: 'Product', value: 'Product' },
++        { label: 'Warehouse', value: 'Warehouse' },
++        { label: 'Shipment', value: 'Shipment' },
++        { label: 'StockLocation', value: 'StockLocation' },
++        { label: 'User', value: 'User' }
++    ]
++
++    const entityTagColors: Record<string, string> = {
++        'Product': 'info',
++        'Warehouse': 'success',
++        'Shipment': 'warning',
++        'StockLocation': 'danger',
++        'User': 'help'
++    }
++
++    const dateTemplate = (row: any) => {
++        const d = new Date(row.createdAt)
++        return d.toLocaleString('en-IN', {
++            day: '2-digit', month: 'short', year: 'numeric',
++            hour: '2-digit', minute: '2-digit'
++        })
++    }
++
++    const entityTemplate = (row: any) => (
++        <Tag value={row.entity} severity={entityTagColors[row.entity] as any || 'info'} className="text-xs" />
++    )
++
++    const userTemplate = (row: any) => (
++        <div>
++            <div className="font-medium">{row.performedBy?.name || 'System'}</div>
++            <div className="text-xs text-gray-400">{row.performedBy?.email || ''}</div>
++        </div>
++    )
++
++    return (
++        <div className="p-4">
++            <BredCrums PageName="Activity Logs" PageLink="/activity-logs" />
++
++            <div className="flex items-center justify-between mb-4 mt-4 flex-wrap gap-2">
++                <div className="flex items-center gap-2">
++                    <Dropdown value={entity} options={entityOptions}
++                        onChange={(e) => { setEntity(e.value); setPage(1) }}
++                        className="w-48" />
++                    {data?.total !== undefined && (
++                        <span className="text-sm text-gray-500">{data.total} entries</span>
++                    )}
++                </div>
++            </div>
++
++            <DataTable value={data?.logs || []} loading={isLoading} stripedRows
++                emptyMessage="No activity logs found" className="shadow-sm">
++                <Column header="When" body={dateTemplate} sortable field="createdAt" style={{ width: '160px' }} />
++                <Column field="action" header="Action" sortable />
++                <Column header="Entity" body={entityTemplate} style={{ width: '140px' }} />
++                <Column field="details" header="Details" />
++                <Column header="By" body={userTemplate} style={{ width: '180px' }} />
++            </DataTable>
++
++            <div className="flex justify-between mt-4">
++                <Button label="Previous" disabled={page <= 1} onClick={() => setPage(p => p - 1)} size="small" outlined />
++                <span className="text-sm text-gray-500">Page {page}</span>
++                <Button label="Next" disabled={!data?.more} onClick={() => setPage(p => p + 1)} size="small" outlined />
++            </div>
++        </div>
++    )
++}
++
++export default ActivityLogPage
+diff --git a/frontend/src/pages/Home/index.tsx b/frontend/src/pages/Home/index.tsx
+index cc1bb2f..5adf808 100644
+--- a/frontend/src/pages/Home/index.tsx
++++ b/frontend/src/pages/Home/index.tsx
+@@ -1,15 +1,156 @@
+ import BasicChart from "./components/Basic"
+ import PieChartDemo from "./components/Pie"
++import { useGetDashboardStatsQuery } from '../../provider/queries/Report.query'
++import { useNavigate } from 'react-router-dom'
+ 
+-const HomePage = ()=>{
++const HomePage = () => {
++    const { data: stats, isLoading } = useGetDashboardStatsQuery()
++    const navigate = useNavigate()
+ 
+-    return <div className="w-full flex flex-wrap ">
+-        <BasicChart/>
++    const formatCurrency = (val: number) => `₹${(val || 0).toLocaleString('en-IN')}`
+ 
+-        <PieChartDemo/>
++    const statCards = [
++        {
++            label: 'Total Products',
++            value: stats?.totalProducts || 0,
++            icon: 'pi pi-box',
++            color: 'from-blue-500 to-blue-600',
++            bgLight: 'bg-blue-50',
++            textColor: 'text-blue-700',
++            onClick: () => navigate('/products')
++        },
++        {
++            label: 'Total Units in Stock',
++            value: (stats?.totalUnits || 0).toLocaleString(),
++            icon: 'pi pi-database',
++            color: 'from-green-500 to-green-600',
++            bgLight: 'bg-green-50',
++            textColor: 'text-green-700',
++            onClick: () => navigate('/warehouse-stock')
++        },
++        {
++            label: 'Inventory Value',
++            value: formatCurrency(stats?.totalValue),
++            icon: 'pi pi-indian-rupee',
++            color: 'from-purple-500 to-purple-600',
++            bgLight: 'bg-purple-50',
++            textColor: 'text-purple-700',
++            onClick: () => navigate('/reports')
++        },
++        {
++            label: 'Low Stock Alerts',
++            value: stats?.lowStockCount || 0,
++            icon: 'pi pi-exclamation-triangle',
++            color: 'from-orange-500 to-orange-600',
++            bgLight: 'bg-orange-50',
++            textColor: 'text-orange-700',
++            onClick: () => navigate('/products')
++        },
++        {
++            label: 'Warehouses',
++            value: stats?.totalWarehouses || 0,
++            icon: 'pi pi-building',
++            color: 'from-cyan-500 to-cyan-600',
++            bgLight: 'bg-cyan-50',
++            textColor: 'text-cyan-700',
++            onClick: () => navigate('/warehouses')
++        },
++        {
++            label: 'Pending Shipments',
++            value: stats?.pendingShipments || 0,
++            icon: 'pi pi-truck',
++            color: 'from-red-500 to-red-600',
++            bgLight: 'bg-red-50',
++            textColor: 'text-red-700',
++            onClick: () => navigate('/shipments')
++        }
++    ]
+ 
+-    </div>
++    return (
++        <div className="p-4">
++            {/* WMS Stats Cards */}
++            <div className="mb-6">
++                <h2 className="text-xl font-bold text-gray-800 mb-4">Warehouse Overview</h2>
++                {isLoading ? (
++                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
++                        {[...Array(6)].map((_, i) => (
++                            <div key={i} className="bg-gray-100 rounded-xl p-4 h-28 animate-pulse" />
++                        ))}
++                    </div>
++                ) : (
++                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
++                        {statCards.map((card, i) => (
++                            <div key={i}
++                                onClick={card.onClick}
++                                className={`${card.bgLight} rounded-xl p-4 cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02] border border-transparent hover:border-gray-200`}>
++                                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${card.color} flex items-center justify-center mb-3`}>
++                                    <i className={`${card.icon} text-white text-lg`} />
++                                </div>
++                                <div className={`text-2xl font-bold ${card.textColor}`}>{card.value}</div>
++                                <div className="text-xs text-gray-500 mt-1 font-medium">{card.label}</div>
++                            </div>
++                        ))}
++                    </div>
++                )}
++            </div>
+ 
++            {/* Recent Shipments Table */}
++            {stats?.recentShipments?.length > 0 && (
++                <div className="mb-6">
++                    <h3 className="text-lg font-semibold text-gray-700 mb-3">Recent Shipments</h3>
++                    <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
++                        <table className="w-full text-sm">
++                            <thead className="bg-gray-50">
++                                <tr>
++                                    <th className="text-left p-3 font-medium text-gray-600">Type</th>
++                                    <th className="text-left p-3 font-medium text-gray-600">Product</th>
++                                    <th className="text-left p-3 font-medium text-gray-600">Qty</th>
++                                    <th className="text-left p-3 font-medium text-gray-600">Status</th>
++                                    <th className="text-left p-3 font-medium text-gray-600">Date</th>
++                                </tr>
++                            </thead>
++                            <tbody>
++                                {stats.recentShipments.map((s: any, i: number) => (
++                                    <tr key={i} className="border-t hover:bg-gray-50">
++                                        <td className="p-3">
++                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${s.type === 'Inbound'
++                                                ? 'bg-green-100 text-green-700'
++                                                : 'bg-orange-100 text-orange-700'
++                                                }`}>
++                                                <i className={`pi ${s.type === 'Inbound' ? 'pi-download' : 'pi-upload'} text-[10px]`} />
++                                                {s.type}
++                                            </span>
++                                        </td>
++                                        <td className="p-3 font-medium">{s.product?.name || 'N/A'}</td>
++                                        <td className="p-3">{s.quantity}</td>
++                                        <td className="p-3">
++                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${s.status === 'Delivered' ? 'bg-green-100 text-green-700'
++                                                : s.status === 'In Transit' ? 'bg-blue-100 text-blue-700'
++                                                    : s.status === 'Cancelled' ? 'bg-red-100 text-red-700'
++                                                        : 'bg-yellow-100 text-yellow-700'
++                                                }`}>
++                                                {s.status}
++                                            </span>
++                                        </td>
++                                        <td className="p-3 text-gray-500">
++                                            {new Date(s.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
++                                        </td>
++                                    </tr>
++                                ))}
++                            </tbody>
++                        </table>
++                    </div>
++                </div>
++            )}
++
++            {/* Existing Charts */}
++            <h3 className="text-lg font-semibold text-gray-700 mb-3">IMS Analytics</h3>
++            <div className="w-full flex flex-wrap">
++                <BasicChart />
++                <PieChartDemo />
++            </div>
++        </div>
++    )
+ }
+ 
+ export default HomePage
+\ No newline at end of file
+diff --git a/frontend/src/pages/Locations/index.tsx b/frontend/src/pages/Locations/index.tsx
+new file mode 100644
+index 0000000..fa109e4
+--- /dev/null
++++ b/frontend/src/pages/Locations/index.tsx
+@@ -0,0 +1,118 @@
++import { useState } from 'react'
++import { toast } from 'sonner'
++import { useSearchParams } from 'react-router-dom'
++import { useGetLocationsQuery, useCreateLocationMutation, useDeleteLocationMutation } from '../../provider/queries/Warehouse.query'
++import BredCrums from '../../components/BredCrums'
++import { DataTable } from 'primereact/datatable'
++import { Column } from 'primereact/column'
++import { Dialog } from 'primereact/dialog'
++import { InputText } from 'primereact/inputtext'
++import { Button } from 'primereact/button'
++import { confirmDialog, ConfirmDialog } from 'primereact/confirmdialog'
++
++const LocationsPage = () => {
++    const [searchParams] = useSearchParams()
++    const warehouseId = searchParams.get('warehouseId') || ''
++    const warehouseName = searchParams.get('name') || 'Warehouse'
++
++    const [showDialog, setShowDialog] = useState(false)
++    const [form, setForm] = useState({ rack: '', bin: '' })
++
++    const { data, isLoading } = useGetLocationsQuery(warehouseId, { skip: !warehouseId })
++    const [createLocation, { isLoading: creating }] = useCreateLocationMutation()
++    const [deleteLocation] = useDeleteLocationMutation()
++
++    const handleCreate = async () => {
++        try {
++            const res: any = await createLocation({ warehouseId, ...form }).unwrap()
++            toast.success(res.msg)
++            setShowDialog(false)
++            setForm({ rack: '', bin: '' })
++        } catch (error: any) {
++            toast.error(error?.data?.message || 'Error creating location')
++        }
++    }
++
++    const handleDelete = (id: string) => {
++        confirmDialog({
++            message: 'Are you sure you want to delete this location? All stock in this location will be removed.',
++            header: 'Confirm Delete',
++            icon: 'pi pi-exclamation-triangle',
++            accept: async () => {
++                try {
++                    const res: any = await deleteLocation(id).unwrap()
++                    toast.success(res.msg)
++                } catch (error: any) {
++                    toast.error(error?.data?.message || 'Error deleting location')
++                }
++            }
++        })
++    }
++
++    const actionTemplate = (rowData: any) => (
++        <div className="flex gap-2">
++            <Button icon="pi pi-trash" severity="danger" size="small" rounded text
++                onClick={() => handleDelete(rowData._id)} tooltip="Delete" />
++        </div>
++    )
++
++    if (!warehouseId) {
++        return (
++            <div className="p-4">
++                <BredCrums PageName="Locations" PageLink="/locations" />
++                <div className="mt-8 text-center text-gray-500">
++                    <p className="text-lg">Please select a warehouse first.</p>
++                    <p className="text-sm mt-2">Go to Warehouses page and click on the locations icon.</p>
++                </div>
++            </div>
++        )
++    }
++
++    return (
++        <div className="p-4">
++            <BredCrums PageName={`Locations — ${warehouseName}`} PageLink="/locations" />
++            <ConfirmDialog />
++
++            <div className="flex items-center justify-between mb-4 mt-4">
++                <div>
++                    <h3 className="text-lg font-semibold text-gray-700">
++                        Rack / Bin locations in <span className="text-blue-600">{warehouseName}</span>
++                    </h3>
++                </div>
++                <Button label="Add Location" icon="pi pi-plus" onClick={() => setShowDialog(true)} />
++            </div>
++
++            <DataTable value={data?.locations || []} loading={isLoading} stripedRows
++                emptyMessage="No locations found" className="shadow-sm">
++                <Column field="rack" header="Rack" sortable />
++                <Column field="bin" header="Bin" sortable />
++                <Column header="Status" body={(row: any) => (
++                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${row.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
++                        {row.isActive ? 'Active' : 'Inactive'}
++                    </span>
++                )} />
++                <Column header="Actions" body={actionTemplate} />
++            </DataTable>
++
++            <Dialog header="Create Storage Location" visible={showDialog} onHide={() => setShowDialog(false)}
++                style={{ width: '400px' }} modal>
++                <div className="flex flex-col gap-3 mt-2">
++                    <div>
++                        <label className="block text-sm font-medium mb-1">Rack *</label>
++                        <InputText value={form.rack} onChange={(e) => setForm({ ...form, rack: e.target.value })}
++                            className="w-full" placeholder="e.g. R1, A-01" />
++                    </div>
++                    <div>
++                        <label className="block text-sm font-medium mb-1">Bin *</label>
++                        <InputText value={form.bin} onChange={(e) => setForm({ ...form, bin: e.target.value })}
++                            className="w-full" placeholder="e.g. B1, 01-A" />
++                    </div>
++                    <Button label="Create" icon="pi pi-check" onClick={handleCreate} loading={creating}
++                        className="mt-2" />
++                </div>
++            </Dialog>
++        </div>
++    )
++}
++
++export default LocationsPage
+diff --git a/frontend/src/pages/Picking/index.tsx b/frontend/src/pages/Picking/index.tsx
+new file mode 100644
+index 0000000..8141c5a
+--- /dev/null
++++ b/frontend/src/pages/Picking/index.tsx
+@@ -0,0 +1,200 @@
++import { useState } from 'react'
++import { toast } from 'sonner'
++import { useGetProductsForSearchQuery } from '../../provider/queries/Product.query'
++import { useGetWarehousesForSearchQuery, useGetLocationsQuery } from '../../provider/queries/Warehouse.query'
++import { usePickStockMutation, useTransferStockMutation, useGetStockByProductQuery } from '../../provider/queries/StockLocation.query'
++import BredCrums from '../../components/BredCrums'
++import { Dropdown } from 'primereact/dropdown'
++import { InputText } from 'primereact/inputtext'
++import { Button } from 'primereact/button'
++import { DataTable } from 'primereact/datatable'
++import { Column } from 'primereact/column'
++import { TabView, TabPanel } from 'primereact/tabview'
++
++const PickingPage = () => {
++    const [selectedWarehouse, setSelectedWarehouse] = useState('')
++    const [selectedWarehouse2, setSelectedWarehouse2] = useState('')
++    const [selectedWarehouseTo, setSelectedWarehouseTo] = useState('')
++    const [pickForm, setPickForm] = useState({ productId: '', locationId: '', quantity: '' })
++    const [transferForm, setTransferForm] = useState({ productId: '', fromLocationId: '', toLocationId: '', quantity: '' })
++    const [viewProduct, setViewProduct] = useState('')
++
++    const { data: productsData } = useGetProductsForSearchQuery({})
++    const { data: warehousesData } = useGetWarehousesForSearchQuery({})
++    const { data: locationsData } = useGetLocationsQuery(selectedWarehouse, { skip: !selectedWarehouse })
++    const { data: locationsData2 } = useGetLocationsQuery(selectedWarehouse2, { skip: !selectedWarehouse2 })
++    const { data: locationsDataTo } = useGetLocationsQuery(selectedWarehouseTo, { skip: !selectedWarehouseTo })
++    const { data: stockData } = useGetStockByProductQuery(viewProduct, { skip: !viewProduct })
++
++    const [pickStock, { isLoading: picking }] = usePickStockMutation()
++    const [transferStock, { isLoading: transferring }] = useTransferStockMutation()
++
++    const productOptions = (productsData?.products || []).map((p: any) => ({
++        label: `${p.name} (${p.sku})`,
++        value: p._id
++    }))
++
++    const warehouseOptions = (warehousesData?.warehouses || []).map((w: any) => ({
++        label: w.name,
++        value: w._id
++    }))
++
++    const locationOptions = (locationsData?.locations || []).map((l: any) => ({
++        label: `Rack: ${l.rack} / Bin: ${l.bin}`,
++        value: l._id
++    }))
++
++    const locationFromOptions = (locationsData2?.locations || []).map((l: any) => ({
++        label: `Rack: ${l.rack} / Bin: ${l.bin}`,
++        value: l._id
++    }))
++
++    const locationToOptions = (locationsDataTo?.locations || []).map((l: any) => ({
++        label: `Rack: ${l.rack} / Bin: ${l.bin}`,
++        value: l._id
++    }))
++
++    const handlePick = async () => {
++        try {
++            const res: any = await pickStock(pickForm).unwrap()
++            toast.success(res.msg)
++            setPickForm({ ...pickForm, quantity: '' })
++        } catch (error: any) {
++            toast.error(error?.data?.message || 'Error picking stock')
++        }
++    }
++
++    const handleTransfer = async () => {
++        try {
++            const res: any = await transferStock(transferForm).unwrap()
++            toast.success(res.msg)
++            setTransferForm({ ...transferForm, quantity: '' })
++        } catch (error: any) {
++            toast.error(error?.data?.message || 'Error transferring stock')
++        }
++    }
++
++    const productStocks = (stockData?.stocks || []).map((s: any) => ({
++        warehouse: s.location?.warehouse?.name || 'N/A',
++        rack: s.location?.rack || 'N/A',
++        bin: s.location?.bin || 'N/A',
++        quantity: s.quantity,
++        locationId: s.location?._id
++    }))
++
++    return (
++        <div className="p-4">
++            <BredCrums PageName="Picking & Transfer" PageLink="/picking" />
++
++            <TabView className="mt-4">
++                <TabPanel header="Pick Stock" leftIcon="pi pi-shopping-cart mr-2">
++                    <div className="max-w-lg mx-auto">
++                        <h3 className="text-lg font-semibold text-gray-700 mb-4">Pick Items for Orders</h3>
++
++                        {/* Quick stock lookup */}
++                        <div className="mb-6 p-3 bg-gray-50 rounded-lg border">
++                            <label className="block text-sm font-medium mb-1">Quick Stock Lookup</label>
++                            <Dropdown value={viewProduct} options={productOptions}
++                                onChange={(e) => setViewProduct(e.value)}
++                                placeholder="View stock for product" className="w-full" filter />
++                            {viewProduct && productStocks.length > 0 && (
++                                <DataTable value={productStocks} className="mt-2" size="small" stripedRows>
++                                    <Column field="warehouse" header="Warehouse" />
++                                    <Column field="rack" header="Rack" />
++                                    <Column field="bin" header="Bin" />
++                                    <Column field="quantity" header="Available" body={(row: any) => (
++                                        <span className="font-bold text-green-600">{row.quantity}</span>
++                                    )} />
++                                </DataTable>
++                            )}
++                        </div>
++
++                        <div className="flex flex-col gap-4">
++                            <div>
++                                <label className="block text-sm font-medium mb-1">Product *</label>
++                                <Dropdown value={pickForm.productId} options={productOptions}
++                                    onChange={(e) => setPickForm({ ...pickForm, productId: e.value })}
++                                    placeholder="Select product" className="w-full" filter />
++                            </div>
++                            <div>
++                                <label className="block text-sm font-medium mb-1">Warehouse *</label>
++                                <Dropdown value={selectedWarehouse} options={warehouseOptions}
++                                    onChange={(e) => { setSelectedWarehouse(e.value); setPickForm({ ...pickForm, locationId: '' }) }}
++                                    placeholder="Select warehouse" className="w-full" filter />
++                            </div>
++                            <div>
++                                <label className="block text-sm font-medium mb-1">Pick from Location *</label>
++                                <Dropdown value={pickForm.locationId} options={locationOptions}
++                                    onChange={(e) => setPickForm({ ...pickForm, locationId: e.value })}
++                                    placeholder="Select location" className="w-full"
++                                    disabled={!selectedWarehouse} filter />
++                            </div>
++                            <div>
++                                <label className="block text-sm font-medium mb-1">Quantity *</label>
++                                <InputText value={pickForm.quantity}
++                                    onChange={(e) => setPickForm({ ...pickForm, quantity: e.target.value })}
++                                    className="w-full" type="number" min="1" placeholder="Enter quantity" />
++                            </div>
++                            <Button label="Pick Stock" icon="pi pi-shopping-cart" onClick={handlePick}
++                                loading={picking} severity="warning" className="mt-2"
++                                disabled={!pickForm.productId || !pickForm.locationId || !pickForm.quantity} />
++                        </div>
++                    </div>
++                </TabPanel>
++
++                <TabPanel header="Transfer Stock" leftIcon="pi pi-arrows-h mr-2">
++                    <div className="max-w-lg mx-auto">
++                        <h3 className="text-lg font-semibold text-gray-700 mb-4">Transfer Stock Between Locations</h3>
++
++                        <div className="flex flex-col gap-4">
++                            <div>
++                                <label className="block text-sm font-medium mb-1">Product *</label>
++                                <Dropdown value={transferForm.productId} options={productOptions}
++                                    onChange={(e) => setTransferForm({ ...transferForm, productId: e.value })}
++                                    placeholder="Select product" className="w-full" filter />
++                            </div>
++
++                            <div className="p-3 bg-red-50 rounded-lg border border-red-200">
++                                <h4 className="text-sm font-semibold text-red-700 mb-2">Source</h4>
++                                <div className="flex flex-col gap-2">
++                                    <Dropdown value={selectedWarehouse2} options={warehouseOptions}
++                                        onChange={(e) => { setSelectedWarehouse2(e.value); setTransferForm({ ...transferForm, fromLocationId: '' }) }}
++                                        placeholder="Source warehouse" className="w-full" filter />
++                                    <Dropdown value={transferForm.fromLocationId} options={locationFromOptions}
++                                        onChange={(e) => setTransferForm({ ...transferForm, fromLocationId: e.value })}
++                                        placeholder="Source location" className="w-full"
++                                        disabled={!selectedWarehouse2} filter />
++                                </div>
++                            </div>
++
++                            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
++                                <h4 className="text-sm font-semibold text-green-700 mb-2">Destination</h4>
++                                <div className="flex flex-col gap-2">
++                                    <Dropdown value={selectedWarehouseTo} options={warehouseOptions}
++                                        onChange={(e) => { setSelectedWarehouseTo(e.value); setTransferForm({ ...transferForm, toLocationId: '' }) }}
++                                        placeholder="Destination warehouse" className="w-full" filter />
++                                    <Dropdown value={transferForm.toLocationId} options={locationToOptions}
++                                        onChange={(e) => setTransferForm({ ...transferForm, toLocationId: e.value })}
++                                        placeholder="Destination location" className="w-full"
++                                        disabled={!selectedWarehouseTo} filter />
++                                </div>
++                            </div>
++
++                            <div>
++                                <label className="block text-sm font-medium mb-1">Quantity *</label>
++                                <InputText value={transferForm.quantity}
++                                    onChange={(e) => setTransferForm({ ...transferForm, quantity: e.target.value })}
++                                    className="w-full" type="number" min="1" placeholder="Enter quantity" />
++                            </div>
++                            <Button label="Transfer Stock" icon="pi pi-arrows-h" onClick={handleTransfer}
++                                loading={transferring} severity="info" className="mt-2"
++                                disabled={!transferForm.productId || !transferForm.fromLocationId || !transferForm.toLocationId || !transferForm.quantity} />
++                        </div>
++                    </div>
++                </TabPanel>
++            </TabView>
++        </div>
++    )
++}
++
++export default PickingPage
+diff --git a/frontend/src/pages/Products/index.tsx b/frontend/src/pages/Products/index.tsx
+new file mode 100644
+index 0000000..770caec
+--- /dev/null
++++ b/frontend/src/pages/Products/index.tsx
+@@ -0,0 +1,164 @@
++import { useState } from 'react'
++import { toast } from 'sonner'
++import { useGetAllProductsQuery, useCreateProductMutation, useDeleteProductMutation } from '../../provider/queries/Product.query'
++import BredCrums from '../../components/BredCrums'
++import { DataTable } from 'primereact/datatable'
++import { Column } from 'primereact/column'
++import { Dialog } from 'primereact/dialog'
++import { InputText } from 'primereact/inputtext'
++import { Button } from 'primereact/button'
++import { Tag } from 'primereact/tag'
++import { confirmDialog, ConfirmDialog } from 'primereact/confirmdialog'
++import { useNavigate } from 'react-router-dom'
++
++const ProductsPage = () => {
++    const [page, setPage] = useState(1)
++    const [query, setQuery] = useState('')
++    const [lowStock, setLowStock] = useState(false)
++    const [showDialog, setShowDialog] = useState(false)
++    const [form, setForm] = useState({ name: '', sku: '', category: '', price: '', reorderThreshold: '10' })
++
++    const { data, isLoading } = useGetAllProductsQuery({ page, query, lowStock })
++    const [createProduct, { isLoading: creating }] = useCreateProductMutation()
++    const [deleteProduct] = useDeleteProductMutation()
++    const navigate = useNavigate()
++
++    const handleCreate = async () => {
++        try {
++            const res: any = await createProduct(form).unwrap()
++            toast.success(res.msg)
++            setShowDialog(false)
++            setForm({ name: '', sku: '', category: '', price: '', reorderThreshold: '10' })
++        } catch (error: any) {
++            toast.error(error?.data?.message || 'Error creating product')
++        }
++    }
++
++    const handleDelete = (id: string) => {
++        confirmDialog({
++            message: 'This will deactivate the product (soft-delete). It can be restored later.',
++            header: 'Deactivate Product',
++            icon: 'pi pi-exclamation-triangle',
++            accept: async () => {
++                try {
++                    const res: any = await deleteProduct(id).unwrap()
++                    toast.success(res.msg)
++                } catch (error: any) {
++                    toast.error(error?.data?.message || 'Error deleting product')
++                }
++            }
++        })
++    }
++
++    const qtyTemplate = (row: any) => {
++        const isLow = row.totalQuantity <= row.reorderThreshold
++        return (
++            <div className="flex items-center gap-2">
++                <span className={`font-semibold ${row.totalQuantity <= 0 ? 'text-red-600' : isLow ? 'text-orange-600' : 'text-green-600'}`}>
++                    {row.totalQuantity}
++                </span>
++                {isLow && row.totalQuantity > 0 && (
++                    <Tag value="Low Stock" severity="warning" icon="pi pi-exclamation-triangle" className="text-xs" />
++                )}
++                {row.totalQuantity <= 0 && (
++                    <Tag value="Out of Stock" severity="danger" icon="pi pi-times-circle" className="text-xs" />
++                )}
++            </div>
++        )
++    }
++
++    const actionTemplate = (rowData: any) => (
++        <div className="flex gap-2">
++            <Button icon="pi pi-eye" severity="info" size="small" rounded text
++                onClick={() => navigate(`/warehouse-stock?productId=${rowData._id}`)} tooltip="View Stock" />
++            <Button icon="pi pi-truck" severity="help" size="small" rounded text
++                onClick={() => navigate(`/shipments?productId=${rowData._id}`)} tooltip="Shipment History" />
++            <Button icon="pi pi-trash" severity="danger" size="small" rounded text
++                onClick={() => handleDelete(rowData._id)} tooltip="Deactivate" />
++        </div>
++    )
++
++    return (
++        <div className="p-4">
++            <BredCrums PageName="Products" PageLink="/products" />
++            <ConfirmDialog />
++
++            <div className="flex items-center justify-between mb-4 mt-4 flex-wrap gap-2">
++                <div className="flex items-center gap-2">
++                    <InputText
++                        placeholder="Search products..."
++                        value={query}
++                        onChange={(e) => { setQuery(e.target.value); setPage(1) }}
++                        className="w-64"
++                    />
++                    <Button
++                        label={lowStock ? 'Low Stock' : 'All'}
++                        icon={lowStock ? 'pi pi-exclamation-triangle' : 'pi pi-list'}
++                        severity={lowStock ? 'warning' : 'secondary'}
++                        outlined
++                        size="small"
++                        onClick={() => { setLowStock(!lowStock); setPage(1) }}
++                        tooltip="Toggle low stock filter"
++                    />
++                    {data?.total !== undefined && (
++                        <span className="text-sm text-gray-500">{data.total} products</span>
++                    )}
++                </div>
++                <Button label="Add Product" icon="pi pi-plus" onClick={() => setShowDialog(true)} />
++            </div>
++
++            <DataTable value={data?.products || []} loading={isLoading} stripedRows
++                emptyMessage={lowStock ? "No low-stock products found" : "No products found"} className="shadow-sm">
++                <Column field="name" header="Name" sortable />
++                <Column field="sku" header="SKU" sortable />
++                <Column field="category" header="Category" sortable />
++                <Column field="price" header="Price" sortable body={(row: any) => `₹${row.price}`} />
++                <Column header="Qty / Threshold" body={qtyTemplate} sortable field="totalQuantity" />
++                <Column field="reorderThreshold" header="Reorder At" sortable />
++                <Column header="Actions" body={actionTemplate} />
++            </DataTable>
++
++            <div className="flex justify-between mt-4">
++                <Button label="Previous" disabled={page <= 1} onClick={() => setPage(p => p - 1)} size="small" outlined />
++                <span className="text-sm text-gray-500">Page {page}</span>
++                <Button label="Next" disabled={!data?.more} onClick={() => setPage(p => p + 1)} size="small" outlined />
++            </div>
++
++            <Dialog header="Create Product" visible={showDialog} onHide={() => setShowDialog(false)}
++                style={{ width: '450px' }} modal>
++                <div className="flex flex-col gap-3 mt-2">
++                    <div>
++                        <label className="block text-sm font-medium mb-1">Name *</label>
++                        <InputText value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
++                            className="w-full" placeholder="Product name" />
++                    </div>
++                    <div>
++                        <label className="block text-sm font-medium mb-1">SKU *</label>
++                        <InputText value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })}
++                            className="w-full" placeholder="e.g. PRD-001" />
++                    </div>
++                    <div>
++                        <label className="block text-sm font-medium mb-1">Category</label>
++                        <InputText value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}
++                            className="w-full" placeholder="Category" />
++                    </div>
++                    <div>
++                        <label className="block text-sm font-medium mb-1">Price *</label>
++                        <InputText value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })}
++                            className="w-full" placeholder="0" type="number" />
++                    </div>
++                    <div>
++                        <label className="block text-sm font-medium mb-1">Reorder Threshold</label>
++                        <InputText value={form.reorderThreshold} onChange={(e) => setForm({ ...form, reorderThreshold: e.target.value })}
++                            className="w-full" placeholder="10" type="number" min="0" />
++                        <small className="text-gray-400">Low-stock alert when quantity falls below this</small>
++                    </div>
++                    <Button label="Create" icon="pi pi-check" onClick={handleCreate} loading={creating}
++                        className="mt-2" />
++                </div>
++            </Dialog>
++        </div>
++    )
++}
++
++export default ProductsPage
+diff --git a/frontend/src/pages/Reports/index.tsx b/frontend/src/pages/Reports/index.tsx
+new file mode 100644
+index 0000000..e82fd28
+--- /dev/null
++++ b/frontend/src/pages/Reports/index.tsx
+@@ -0,0 +1,149 @@
++import BredCrums from '../../components/BredCrums'
++import { useGetInventoryValuationQuery, useGetLowStockProductsQuery, useGetShipmentSummaryQuery } from '../../provider/queries/Report.query'
++import { DataTable } from 'primereact/datatable'
++import { Column } from 'primereact/column'
++import { Tag } from 'primereact/tag'
++import { TabView, TabPanel } from 'primereact/tabview'
++
++const ReportsPage = () => {
++    const { data: valuation, isLoading: loadingValuation } = useGetInventoryValuationQuery()
++    const { data: lowStock, isLoading: loadingLowStock } = useGetLowStockProductsQuery()
++    const { data: shipmentData, isLoading: loadingShipments } = useGetShipmentSummaryQuery(30)
++
++    const formatCurrency = (val: number) => `₹${(val || 0).toLocaleString('en-IN')}`
++
++    return (
++        <div className="p-4">
++            <BredCrums PageName="Reports & Analytics" PageLink="/reports" />
++
++            <TabView className="mt-4">
++                {/* Inventory Valuation Tab */}
++                <TabPanel header="Inventory Valuation" leftIcon="pi pi-chart-bar mr-2">
++                    {loadingValuation ? (
++                        <div className="text-center py-8">Loading...</div>
++                    ) : (
++                        <>
++                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
++                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
++                                    <div className="text-sm text-blue-600 font-medium">Total Inventory Value</div>
++                                    <div className="text-2xl font-bold text-blue-800 mt-1">{formatCurrency(valuation?.valuation?.totalValue)}</div>
++                                </div>
++                                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
++                                    <div className="text-sm text-green-600 font-medium">Total Products</div>
++                                    <div className="text-2xl font-bold text-green-800 mt-1">{valuation?.valuation?.totalProducts || 0}</div>
++                                </div>
++                                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
++                                    <div className="text-sm text-purple-600 font-medium">Total Units in Stock</div>
++                                    <div className="text-2xl font-bold text-purple-800 mt-1">{(valuation?.valuation?.totalUnits || 0).toLocaleString()}</div>
++                                </div>
++                            </div>
++
++                            <h3 className="text-lg font-semibold mb-3">Value by Category</h3>
++                            <DataTable value={valuation?.categoryBreakdown || []} stripedRows emptyMessage="No data" className="shadow-sm">
++                                <Column field="_id" header="Category" body={(row: any) => row._id || 'Uncategorized'} sortable />
++                                <Column field="count" header="Products" sortable />
++                                <Column field="totalUnits" header="Total Units" sortable />
++                                <Column field="totalValue" header="Total Value" sortable
++                                    body={(row: any) => formatCurrency(row.totalValue)} />
++                            </DataTable>
++                        </>
++                    )}
++                </TabPanel>
++
++                {/* Low Stock Tab */}
++                <TabPanel header={`Low Stock (${lowStock?.count || 0})`} leftIcon="pi pi-exclamation-triangle mr-2">
++                    {loadingLowStock ? (
++                        <div className="text-center py-8">Loading...</div>
++                    ) : (
++                        <DataTable value={lowStock?.products || []} stripedRows
++                            emptyMessage="All products are well-stocked!" className="shadow-sm">
++                            <Column field="name" header="Product" sortable />
++                            <Column field="sku" header="SKU" sortable />
++                            <Column field="category" header="Category" sortable />
++                            <Column header="Stock Level" sortable field="totalQuantity"
++                                body={(row: any) => (
++                                    <div className="flex items-center gap-2">
++                                        <span className={`font-bold ${row.totalQuantity <= 0 ? 'text-red-600' : 'text-orange-600'}`}>
++                                            {row.totalQuantity}
++                                        </span>
++                                        <span className="text-gray-400">/</span>
++                                        <span className="text-gray-500">{row.reorderThreshold}</span>
++                                        {row.totalQuantity <= 0 ? (
++                                            <Tag value="Out of Stock" severity="danger" className="text-xs" />
++                                        ) : (
++                                            <Tag value="Low" severity="warning" className="text-xs" />
++                                        )}
++                                    </div>
++                                )} />
++                            <Column field="price" header="Unit Price" body={(row: any) => formatCurrency(row.price)} />
++                        </DataTable>
++                    )}
++                </TabPanel>
++
++                {/* Shipment Summary Tab */}
++                <TabPanel header="Shipment Summary" leftIcon="pi pi-truck mr-2">
++                    {loadingShipments ? (
++                        <div className="text-center py-8">Loading...</div>
++                    ) : (
++                        <>
++                            <p className="text-sm text-gray-500 mb-4">{shipmentData?.period}</p>
++                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
++                                {/* Inbound */}
++                                <div className="border rounded-lg p-4">
++                                    <h3 className="text-lg font-semibold text-green-700 mb-3 flex items-center gap-2">
++                                        <i className="pi pi-download" /> Inbound Shipments
++                                    </h3>
++                                    <div className="grid grid-cols-2 gap-3">
++                                        <div className="bg-gray-50 rounded p-3 text-center">
++                                            <div className="text-2xl font-bold">{shipmentData?.inbound?.total || 0}</div>
++                                            <div className="text-xs text-gray-500">Total</div>
++                                        </div>
++                                        <div className="bg-gray-50 rounded p-3 text-center">
++                                            <div className="text-2xl font-bold">{(shipmentData?.inbound?.totalQty || 0).toLocaleString()}</div>
++                                            <div className="text-xs text-gray-500">Units</div>
++                                        </div>
++                                        <div className="bg-yellow-50 rounded p-3 text-center">
++                                            <div className="text-xl font-bold text-yellow-700">{shipmentData?.inbound?.pending || 0}</div>
++                                            <div className="text-xs text-yellow-600">Pending</div>
++                                        </div>
++                                        <div className="bg-green-50 rounded p-3 text-center">
++                                            <div className="text-xl font-bold text-green-700">{shipmentData?.inbound?.delivered || 0}</div>
++                                            <div className="text-xs text-green-600">Delivered</div>
++                                        </div>
++                                    </div>
++                                </div>
++
++                                {/* Outbound */}
++                                <div className="border rounded-lg p-4">
++                                    <h3 className="text-lg font-semibold text-orange-700 mb-3 flex items-center gap-2">
++                                        <i className="pi pi-upload" /> Outbound Shipments
++                                    </h3>
++                                    <div className="grid grid-cols-2 gap-3">
++                                        <div className="bg-gray-50 rounded p-3 text-center">
++                                            <div className="text-2xl font-bold">{shipmentData?.outbound?.total || 0}</div>
++                                            <div className="text-xs text-gray-500">Total</div>
++                                        </div>
++                                        <div className="bg-gray-50 rounded p-3 text-center">
++                                            <div className="text-2xl font-bold">{(shipmentData?.outbound?.totalQty || 0).toLocaleString()}</div>
++                                            <div className="text-xs text-gray-500">Units</div>
++                                        </div>
++                                        <div className="bg-yellow-50 rounded p-3 text-center">
++                                            <div className="text-xl font-bold text-yellow-700">{shipmentData?.outbound?.pending || 0}</div>
++                                            <div className="text-xs text-yellow-600">Pending</div>
++                                        </div>
++                                        <div className="bg-green-50 rounded p-3 text-center">
++                                            <div className="text-xl font-bold text-green-700">{shipmentData?.outbound?.delivered || 0}</div>
++                                            <div className="text-xs text-green-600">Delivered</div>
++                                        </div>
++                                    </div>
++                                </div>
++                            </div>
++                        </>
++                    )}
++                </TabPanel>
++            </TabView>
++        </div>
++    )
++}
++
++export default ReportsPage
+diff --git a/frontend/src/pages/Shipments/index.tsx b/frontend/src/pages/Shipments/index.tsx
+new file mode 100644
+index 0000000..c62cfc1
+--- /dev/null
++++ b/frontend/src/pages/Shipments/index.tsx
+@@ -0,0 +1,209 @@
++import { useState } from 'react'
++import { toast } from 'sonner'
++import { useGetAllShipmentsQuery, useCreateShipmentMutation, useUpdateShipmentStatusMutation, useDeleteShipmentMutation } from '../../provider/queries/Shipment.query'
++import { useGetProductsForSearchQuery } from '../../provider/queries/Product.query'
++import BredCrums from '../../components/BredCrums'
++import { DataTable } from 'primereact/datatable'
++import { Column } from 'primereact/column'
++import { Dialog } from 'primereact/dialog'
++import { InputText } from 'primereact/inputtext'
++import { Button } from 'primereact/button'
++import { Dropdown } from 'primereact/dropdown'
++import { Tag } from 'primereact/tag'
++import { confirmDialog, ConfirmDialog } from 'primereact/confirmdialog'
++
++const ShipmentsPage = () => {
++    const [page, setPage] = useState(1)
++    const [query] = useState('')
++    const [typeFilter, setTypeFilter] = useState('')
++    const [showDialog, setShowDialog] = useState(false)
++    const [form, setForm] = useState({ type: '', productId: '', quantity: '', notes: '' })
++
++    const { data, isLoading } = useGetAllShipmentsQuery({ page, query, type: typeFilter })
++    const { data: productsData } = useGetProductsForSearchQuery({})
++    const [createShipment, { isLoading: creating }] = useCreateShipmentMutation()
++    const [updateStatus] = useUpdateShipmentStatusMutation()
++    const [deleteShipment] = useDeleteShipmentMutation()
++
++    const productOptions = (productsData?.products || []).map((p: any) => ({
++        label: `${p.name} (${p.sku})`,
++        value: p._id
++    }))
++
++    const handleCreate = async () => {
++        try {
++            const res: any = await createShipment(form).unwrap()
++            toast.success(res.msg)
++            setShowDialog(false)
++            setForm({ type: '', productId: '', quantity: '', notes: '' })
++        } catch (error: any) {
++            toast.error(error?.data?.message || 'Error creating shipment')
++        }
++    }
++
++    const handleStatusUpdate = (id: string, newStatus: string) => {
++        confirmDialog({
++            message: `Update shipment status to "${newStatus}"? ${newStatus === 'Delivered' ? 'This will update the product stock quantity.' : ''}`,
++            header: 'Update Status',
++            icon: 'pi pi-question-circle',
++            accept: async () => {
++                try {
++                    const res: any = await updateStatus({ _id: id, status: newStatus }).unwrap()
++                    toast.success(res.msg)
++                } catch (error: any) {
++                    toast.error(error?.data?.message || 'Error updating status')
++                }
++            }
++        })
++    }
++
++    const handleDelete = (id: string) => {
++        confirmDialog({
++            message: 'Delete this shipment? Only non-delivered shipments can be deleted.',
++            header: 'Confirm Delete',
++            icon: 'pi pi-exclamation-triangle',
++            accept: async () => {
++                try {
++                    const res: any = await deleteShipment(id).unwrap()
++                    toast.success(res.msg)
++                } catch (error: any) {
++                    toast.error(error?.data?.message || 'Error deleting shipment')
++                }
++            }
++        })
++    }
++
++    const typeTemplate = (rowData: any) => (
++        <Tag value={rowData.type}
++            severity={rowData.type === 'Inbound' ? 'success' : 'warning'}
++            icon={rowData.type === 'Inbound' ? 'pi pi-download' : 'pi pi-upload'} />
++    )
++
++    const statusTemplate = (rowData: any) => {
++        const colors: Record<string, string> = {
++            'Pending': 'bg-yellow-100 text-yellow-800',
++            'In Transit': 'bg-blue-100 text-blue-800',
++            'Delivered': 'bg-green-100 text-green-800'
++        }
++        return (
++            <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[rowData.status]}`}>
++                {rowData.status}
++            </span>
++        )
++    }
++
++    const productTemplate = (rowData: any) => (
++        <div>
++            <div className="font-medium">{rowData.product?.name || 'N/A'}</div>
++            <div className="text-xs text-gray-500">{rowData.product?.sku || ''}</div>
++        </div>
++    )
++
++    const actionTemplate = (rowData: any) => {
++        const nextStatus: Record<string, string[]> = {
++            'Pending': ['In Transit', 'Delivered'],
++            'In Transit': ['Delivered'],
++            'Delivered': []
++        }
++        const available = nextStatus[rowData.status] || []
++
++        return (
++            <div className="flex gap-1 flex-wrap">
++                {available.map((s: string) => (
++                    <Button key={s} label={s} size="small" outlined
++                        severity={s === 'Delivered' ? 'success' : 'info'}
++                        onClick={() => handleStatusUpdate(rowData._id, s)} />
++                ))}
++                {rowData.status !== 'Delivered' && (
++                    <Button icon="pi pi-trash" severity="danger" size="small" rounded text
++                        onClick={() => handleDelete(rowData._id)} tooltip="Delete" />
++                )}
++            </div>
++        )
++    }
++
++    const dateTemplate = (rowData: any) => {
++        const d = new Date(rowData.createdAt)
++        return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
++    }
++
++    return (
++        <div className="p-4">
++            <BredCrums PageName="Shipments" PageLink="/shipments" />
++            <ConfirmDialog />
++
++            <div className="flex items-center justify-between mb-4 mt-4 flex-wrap gap-2">
++                <div className="flex items-center gap-2">
++                    <Dropdown value={typeFilter}
++                        options={[
++                            { label: 'All Types', value: '' },
++                            { label: 'Inbound', value: 'Inbound' },
++                            { label: 'Outbound', value: 'Outbound' }
++                        ]}
++                        onChange={(e) => { setTypeFilter(e.value); setPage(1) }}
++                        className="w-40" />
++                    {data?.total !== undefined && (
++                        <span className="text-sm text-gray-500">Total: {data.total}</span>
++                    )}
++                </div>
++                <Button label="New Shipment" icon="pi pi-plus" onClick={() => setShowDialog(true)} />
++            </div>
++
++            <DataTable value={data?.shipments || []} loading={isLoading} stripedRows
++                emptyMessage="No shipments found" className="shadow-sm">
++                <Column header="Type" body={typeTemplate} sortable field="type" />
++                <Column header="Product" body={productTemplate} />
++                <Column field="quantity" header="Qty" sortable />
++                <Column header="Status" body={statusTemplate} sortable field="status" />
++                <Column header="Date" body={dateTemplate} sortable field="createdAt" />
++                <Column field="notes" header="Notes" />
++                <Column header="Actions" body={actionTemplate} style={{ minWidth: '200px' }} />
++            </DataTable>
++
++            <div className="flex justify-between mt-4">
++                <Button label="Previous" disabled={page <= 1} onClick={() => setPage(p => p - 1)} size="small" outlined />
++                <span className="text-sm text-gray-500">Page {page}</span>
++                <Button label="Next" disabled={!data?.more} onClick={() => setPage(p => p + 1)} size="small" outlined />
++            </div>
++
++            <Dialog header="Create Shipment" visible={showDialog} onHide={() => setShowDialog(false)}
++                style={{ width: '500px' }} modal>
++                <div className="flex flex-col gap-3 mt-2">
++                    <div>
++                        <label className="block text-sm font-medium mb-1">Type *</label>
++                        <Dropdown value={form.type}
++                            options={[
++                                { label: 'Inbound (Receiving)', value: 'Inbound' },
++                                { label: 'Outbound (Dispatch)', value: 'Outbound' }
++                            ]}
++                            onChange={(e) => setForm({ ...form, type: e.value })}
++                            placeholder="Select type" className="w-full" />
++                    </div>
++                    <div>
++                        <label className="block text-sm font-medium mb-1">Product *</label>
++                        <Dropdown value={form.productId} options={productOptions}
++                            onChange={(e) => setForm({ ...form, productId: e.value })}
++                            placeholder="Select product" className="w-full" filter />
++                    </div>
++                    <div>
++                        <label className="block text-sm font-medium mb-1">Quantity *</label>
++                        <InputText value={form.quantity}
++                            onChange={(e) => setForm({ ...form, quantity: e.target.value })}
++                            className="w-full" type="number" min="1" placeholder="Enter quantity" />
++                    </div>
++                    <div>
++                        <label className="block text-sm font-medium mb-1">Notes</label>
++                        <InputText value={form.notes}
++                            onChange={(e) => setForm({ ...form, notes: e.target.value })}
++                            className="w-full" placeholder="Optional notes" />
++                    </div>
++                    <Button label="Create Shipment" icon="pi pi-check" onClick={handleCreate}
++                        loading={creating} className="mt-2"
++                        disabled={!form.type || !form.productId || !form.quantity} />
++                </div>
++            </Dialog>
++        </div>
++    )
++}
++
++export default ShipmentsPage
+diff --git a/frontend/src/pages/StockAssign/index.tsx b/frontend/src/pages/StockAssign/index.tsx
+new file mode 100644
+index 0000000..7be808b
+--- /dev/null
++++ b/frontend/src/pages/StockAssign/index.tsx
+@@ -0,0 +1,141 @@
++import { useState } from 'react'
++import { toast } from 'sonner'
++import { useGetProductsForSearchQuery } from '../../provider/queries/Product.query'
++import { useGetWarehousesForSearchQuery, useGetLocationsQuery } from '../../provider/queries/Warehouse.query'
++import { useAssignStockMutation, useReceiveStockMutation } from '../../provider/queries/StockLocation.query'
++import BredCrums from '../../components/BredCrums'
++import { Dropdown } from 'primereact/dropdown'
++import { InputText } from 'primereact/inputtext'
++import { Button } from 'primereact/button'
++import { TabView, TabPanel } from 'primereact/tabview'
++
++const StockAssignPage = () => {
++    const [selectedWarehouse, setSelectedWarehouse] = useState('')
++    const [form, setForm] = useState({ productId: '', locationId: '', quantity: '' })
++
++    const { data: productsData } = useGetProductsForSearchQuery({})
++    const { data: warehousesData } = useGetWarehousesForSearchQuery({})
++    const { data: locationsData } = useGetLocationsQuery(selectedWarehouse, { skip: !selectedWarehouse })
++
++    const [assignStock, { isLoading: assigning }] = useAssignStockMutation()
++    const [receiveStock, { isLoading: receiving }] = useReceiveStockMutation()
++
++    const productOptions = (productsData?.products || []).map((p: any) => ({
++        label: `${p.name} (${p.sku})`,
++        value: p._id
++    }))
++
++    const warehouseOptions = (warehousesData?.warehouses || []).map((w: any) => ({
++        label: w.name,
++        value: w._id
++    }))
++
++    const locationOptions = (locationsData?.locations || []).map((l: any) => ({
++        label: `Rack: ${l.rack} / Bin: ${l.bin}`,
++        value: l._id
++    }))
++
++    const handleAssign = async () => {
++        try {
++            const res: any = await assignStock(form).unwrap()
++            toast.success(res.msg)
++            setForm({ ...form, quantity: '' })
++        } catch (error: any) {
++            toast.error(error?.data?.message || 'Error assigning stock')
++        }
++    }
++
++    const handleReceive = async () => {
++        try {
++            const res: any = await receiveStock(form).unwrap()
++            toast.success(res.msg)
++            setForm({ ...form, quantity: '' })
++        } catch (error: any) {
++            toast.error(error?.data?.message || 'Error receiving stock')
++        }
++    }
++
++    return (
++        <div className="p-4">
++            <BredCrums PageName="Stock Operations" PageLink="/stock-assign" />
++
++            <TabView className="mt-4">
++                <TabPanel header="Assign Stock" leftIcon="pi pi-box mr-2">
++                    <div className="max-w-lg mx-auto">
++                        <h3 className="text-lg font-semibold text-gray-700 mb-4">Assign Product to Location</h3>
++
++                        <div className="flex flex-col gap-4">
++                            <div>
++                                <label className="block text-sm font-medium mb-1">Product *</label>
++                                <Dropdown value={form.productId} options={productOptions}
++                                    onChange={(e) => setForm({ ...form, productId: e.value })}
++                                    placeholder="Select a product" className="w-full" filter />
++                            </div>
++                            <div>
++                                <label className="block text-sm font-medium mb-1">Warehouse *</label>
++                                <Dropdown value={selectedWarehouse} options={warehouseOptions}
++                                    onChange={(e) => { setSelectedWarehouse(e.value); setForm({ ...form, locationId: '' }) }}
++                                    placeholder="Select a warehouse" className="w-full" filter />
++                            </div>
++                            <div>
++                                <label className="block text-sm font-medium mb-1">Location (Rack/Bin) *</label>
++                                <Dropdown value={form.locationId} options={locationOptions}
++                                    onChange={(e) => setForm({ ...form, locationId: e.value })}
++                                    placeholder="Select a location" className="w-full"
++                                    disabled={!selectedWarehouse} filter />
++                            </div>
++                            <div>
++                                <label className="block text-sm font-medium mb-1">Quantity *</label>
++                                <InputText value={form.quantity}
++                                    onChange={(e) => setForm({ ...form, quantity: e.target.value })}
++                                    className="w-full" type="number" min="1" placeholder="Enter quantity" />
++                            </div>
++                            <Button label="Assign Stock" icon="pi pi-check" onClick={handleAssign}
++                                loading={assigning} className="mt-2"
++                                disabled={!form.productId || !form.locationId || !form.quantity} />
++                        </div>
++                    </div>
++                </TabPanel>
++
++                <TabPanel header="Receive Stock" leftIcon="pi pi-download mr-2">
++                    <div className="max-w-lg mx-auto">
++                        <h3 className="text-lg font-semibold text-gray-700 mb-4">Receive Incoming Stock</h3>
++
++                        <div className="flex flex-col gap-4">
++                            <div>
++                                <label className="block text-sm font-medium mb-1">Product *</label>
++                                <Dropdown value={form.productId} options={productOptions}
++                                    onChange={(e) => setForm({ ...form, productId: e.value })}
++                                    placeholder="Select a product" className="w-full" filter />
++                            </div>
++                            <div>
++                                <label className="block text-sm font-medium mb-1">Warehouse *</label>
++                                <Dropdown value={selectedWarehouse} options={warehouseOptions}
++                                    onChange={(e) => { setSelectedWarehouse(e.value); setForm({ ...form, locationId: '' }) }}
++                                    placeholder="Select a warehouse" className="w-full" filter />
++                            </div>
++                            <div>
++                                <label className="block text-sm font-medium mb-1">Location (Rack/Bin) *</label>
++                                <Dropdown value={form.locationId} options={locationOptions}
++                                    onChange={(e) => setForm({ ...form, locationId: e.value })}
++                                    placeholder="Select a location" className="w-full"
++                                    disabled={!selectedWarehouse} filter />
++                            </div>
++                            <div>
++                                <label className="block text-sm font-medium mb-1">Quantity *</label>
++                                <InputText value={form.quantity}
++                                    onChange={(e) => setForm({ ...form, quantity: e.target.value })}
++                                    className="w-full" type="number" min="1" placeholder="Enter quantity" />
++                            </div>
++                            <Button label="Receive Stock" icon="pi pi-download" onClick={handleReceive}
++                                loading={receiving} severity="success" className="mt-2"
++                                disabled={!form.productId || !form.locationId || !form.quantity} />
++                        </div>
++                    </div>
++                </TabPanel>
++            </TabView>
++        </div>
++    )
++}
++
++export default StockAssignPage
+diff --git a/frontend/src/pages/Warehouse/index.tsx b/frontend/src/pages/Warehouse/index.tsx
+new file mode 100644
+index 0000000..b5906da
+--- /dev/null
++++ b/frontend/src/pages/Warehouse/index.tsx
+@@ -0,0 +1,118 @@
++import { useState } from 'react'
++import { toast } from 'sonner'
++import { useGetAllWarehousesQuery, useCreateWarehouseMutation, useDeleteWarehouseMutation } from '../../provider/queries/Warehouse.query'
++import BredCrums from '../../components/BredCrums'
++import { DataTable } from 'primereact/datatable'
++import { Column } from 'primereact/column'
++import { Dialog } from 'primereact/dialog'
++import { InputText } from 'primereact/inputtext'
++import { Button } from 'primereact/button'
++import { confirmDialog, ConfirmDialog } from 'primereact/confirmdialog'
++import { useNavigate } from 'react-router-dom'
++
++const WarehousePage = () => {
++    const [page, setPage] = useState(1)
++    const [query, setQuery] = useState('')
++    const [showDialog, setShowDialog] = useState(false)
++    const [form, setForm] = useState({ name: '', address: '' })
++
++    const { data, isLoading } = useGetAllWarehousesQuery({ page, query })
++    const [createWarehouse, { isLoading: creating }] = useCreateWarehouseMutation()
++    const [deleteWarehouse] = useDeleteWarehouseMutation()
++    const navigate = useNavigate()
++
++    const handleCreate = async () => {
++        try {
++            const res: any = await createWarehouse(form).unwrap()
++            toast.success(res.msg)
++            setShowDialog(false)
++            setForm({ name: '', address: '' })
++        } catch (error: any) {
++            toast.error(error?.data?.message || 'Error creating warehouse')
++        }
++    }
++
++    const handleDelete = (id: string) => {
++        confirmDialog({
++            message: 'Are you sure you want to delete this warehouse? All locations and stock inside will also be deleted.',
++            header: 'Confirm Delete',
++            icon: 'pi pi-exclamation-triangle',
++            accept: async () => {
++                try {
++                    const res: any = await deleteWarehouse(id).unwrap()
++                    toast.success(res.msg)
++                } catch (error: any) {
++                    toast.error(error?.data?.message || 'Error deleting warehouse')
++                }
++            }
++        })
++    }
++
++    const actionTemplate = (rowData: any) => (
++        <div className="flex gap-2">
++            <Button icon="pi pi-map-marker" severity="info" size="small" rounded text
++                onClick={() => navigate(`/locations?warehouseId=${rowData._id}&name=${rowData.name}`)} tooltip="Manage Locations" />
++            <Button icon="pi pi-chart-bar" severity="success" size="small" rounded text
++                onClick={() => navigate(`/warehouse-stock?warehouseId=${rowData._id}`)} tooltip="Stock Report" />
++            <Button icon="pi pi-trash" severity="danger" size="small" rounded text
++                onClick={() => handleDelete(rowData._id)} tooltip="Delete" />
++        </div>
++    )
++
++    const statusTemplate = (rowData: any) => (
++        <span className={`px-2 py-1 rounded-full text-xs font-medium ${rowData.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
++            {rowData.isActive ? 'Active' : 'Inactive'}
++        </span>
++    )
++
++    return (
++        <div className="p-4">
++            <BredCrums PageName="Warehouses" PageLink="/warehouses" />
++            <ConfirmDialog />
++
++            <div className="flex items-center justify-between mb-4 mt-4">
++                <InputText
++                    placeholder="Search warehouses..."
++                    value={query}
++                    onChange={(e) => setQuery(e.target.value)}
++                    className="w-64"
++                />
++                <Button label="Add Warehouse" icon="pi pi-plus" onClick={() => setShowDialog(true)} />
++            </div>
++
++            <DataTable value={data?.warehouses || []} loading={isLoading} stripedRows
++                emptyMessage="No warehouses found" className="shadow-sm">
++                <Column field="name" header="Name" sortable />
++                <Column field="address" header="Address" sortable />
++                <Column header="Status" body={statusTemplate} />
++                <Column header="Actions" body={actionTemplate} />
++            </DataTable>
++
++            <div className="flex justify-between mt-4">
++                <Button label="Previous" disabled={page <= 1} onClick={() => setPage(p => p - 1)} size="small" outlined />
++                <span className="text-sm text-gray-500">Page {page}</span>
++                <Button label="Next" disabled={!data?.more} onClick={() => setPage(p => p + 1)} size="small" outlined />
++            </div>
++
++            <Dialog header="Create Warehouse" visible={showDialog} onHide={() => setShowDialog(false)}
++                style={{ width: '450px' }} modal>
++                <div className="flex flex-col gap-3 mt-2">
++                    <div>
++                        <label className="block text-sm font-medium mb-1">Name *</label>
++                        <InputText value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
++                            className="w-full" placeholder="Warehouse name" />
++                    </div>
++                    <div>
++                        <label className="block text-sm font-medium mb-1">Address *</label>
++                        <InputText value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })}
++                            className="w-full" placeholder="Full address" />
++                    </div>
++                    <Button label="Create" icon="pi pi-check" onClick={handleCreate} loading={creating}
++                        className="mt-2" />
++                </div>
++            </Dialog>
++        </div>
++    )
++}
++
++export default WarehousePage
+diff --git a/frontend/src/pages/WarehouseStock/index.tsx b/frontend/src/pages/WarehouseStock/index.tsx
+new file mode 100644
+index 0000000..e0808be
+--- /dev/null
++++ b/frontend/src/pages/WarehouseStock/index.tsx
+@@ -0,0 +1,120 @@
++import { useState } from 'react'
++import { useSearchParams } from 'react-router-dom'
++import { useGetStockByProductQuery } from '../../provider/queries/StockLocation.query'
++import { useGetProductsForSearchQuery } from '../../provider/queries/Product.query'
++import { useGetWarehousesForSearchQuery, useGetWarehouseStockReportQuery } from '../../provider/queries/Warehouse.query'
++import BredCrums from '../../components/BredCrums'
++import { DataTable } from 'primereact/datatable'
++import { Column } from 'primereact/column'
++import { Dropdown } from 'primereact/dropdown'
++import { TabView, TabPanel } from 'primereact/tabview'
++
++const WarehouseStockPage = () => {
++    const [searchParams] = useSearchParams()
++    const initialProductId = searchParams.get('productId') || ''
++    const initialWarehouseId = searchParams.get('warehouseId') || ''
++
++    const [selectedProduct, setSelectedProduct] = useState(initialProductId)
++    const [selectedWarehouse, setSelectedWarehouse] = useState(initialWarehouseId)
++
++    const { data: productsData } = useGetProductsForSearchQuery({})
++    const { data: warehousesData } = useGetWarehousesForSearchQuery({})
++
++    const { data: productStockData, isLoading: loadingProductStock } = useGetStockByProductQuery(
++        selectedProduct, { skip: !selectedProduct }
++    )
++
++    const { data: warehouseReportData, isLoading: loadingWarehouseReport } = useGetWarehouseStockReportQuery(
++        selectedWarehouse, { skip: !selectedWarehouse }
++    )
++
++    const productOptions = (productsData?.products || []).map((p: any) => ({
++        label: `${p.name} (${p.sku})`,
++        value: p._id
++    }))
++
++    const warehouseOptions = (warehousesData?.warehouses || []).map((w: any) => ({
++        label: w.name,
++        value: w._id
++    }))
++
++    const productStocks = (productStockData?.stocks || []).map((s: any) => ({
++        warehouse: s.location?.warehouse?.name || 'N/A',
++        rack: s.location?.rack || 'N/A',
++        bin: s.location?.bin || 'N/A',
++        quantity: s.quantity
++    }))
++
++    return (
++        <div className="p-4">
++            <BredCrums PageName="Warehouse Stock View" PageLink="/warehouse-stock" />
++
++            <TabView className="mt-4">
++                <TabPanel header="By Product" leftIcon="pi pi-box mr-2">
++                    <div className="mb-4">
++                        <label className="block text-sm font-medium mb-1">Select Product</label>
++                        <Dropdown value={selectedProduct} options={productOptions}
++                            onChange={(e) => setSelectedProduct(e.value)}
++                            placeholder="Choose a product" className="w-full md:w-96" filter />
++                    </div>
++
++                    {selectedProduct && productStockData?.product && (
++                        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
++                            <div className="flex gap-6">
++                                <div><span className="font-medium">Product:</span> {productStockData.product.name}</div>
++                                <div><span className="font-medium">SKU:</span> {productStockData.product.sku}</div>
++                                <div><span className="font-medium">Total Quantity (IMS):</span>{' '}
++                                    <span className="font-bold text-blue-600">{productStockData.product.totalQuantity}</span>
++                                </div>
++                            </div>
++                        </div>
++                    )}
++
++                    <DataTable value={productStocks} loading={loadingProductStock} stripedRows
++                        emptyMessage="Select a product to view stock distribution" className="shadow-sm">
++                        <Column field="warehouse" header="Warehouse" sortable />
++                        <Column field="rack" header="Rack" sortable />
++                        <Column field="bin" header="Bin" sortable />
++                        <Column field="quantity" header="Quantity" sortable
++                            body={(row: any) => (
++                                <span className="font-semibold text-green-600">{row.quantity}</span>
++                            )} />
++                    </DataTable>
++                </TabPanel>
++
++                <TabPanel header="By Warehouse" leftIcon="pi pi-building mr-2">
++                    <div className="mb-4">
++                        <label className="block text-sm font-medium mb-1">Select Warehouse</label>
++                        <Dropdown value={selectedWarehouse} options={warehouseOptions}
++                            onChange={(e) => setSelectedWarehouse(e.value)}
++                            placeholder="Choose a warehouse" className="w-full md:w-96" filter />
++                    </div>
++
++                    {selectedWarehouse && warehouseReportData?.warehouseName && (
++                        <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
++                            <span className="font-medium">Warehouse:</span> {warehouseReportData.warehouseName}
++                            <span className="ml-4 font-medium">Total Items:</span>{' '}
++                            <span className="font-bold text-green-600">
++                                {(warehouseReportData.report || []).reduce((a: number, c: any) => a + c.quantity, 0)}
++                            </span>
++                        </div>
++                    )}
++
++                    <DataTable value={warehouseReportData?.report || []} loading={loadingWarehouseReport} stripedRows
++                        emptyMessage="Select a warehouse to view stock report" className="shadow-sm">
++                        <Column field="productName" header="Product" sortable />
++                        <Column field="productSku" header="SKU" sortable />
++                        <Column field="rack" header="Rack" sortable />
++                        <Column field="bin" header="Bin" sortable />
++                        <Column field="quantity" header="Quantity" sortable
++                            body={(row: any) => (
++                                <span className="font-semibold text-green-600">{row.quantity}</span>
++                            )} />
++                    </DataTable>
++                </TabPanel>
++            </TabView>
++        </div>
++    )
++}
++
++export default WarehouseStockPage
+diff --git a/frontend/src/provider/Route.tsx b/frontend/src/provider/Route.tsx
+index b280711..86527f2 100644
+--- a/frontend/src/provider/Route.tsx
++++ b/frontend/src/provider/Route.tsx
+@@ -2,19 +2,28 @@ import { createBrowserRouter } from "react-router-dom";
+ import App from "../App";
+ import Login from "../pages/Login";
+ import Register from "../pages/Register";
+-import HomePage from "../pages/Home"; 
++import HomePage from "../pages/Home";
+ import ErrorPage from "../pages/Error";
+ import Invoice from "../pages/Invoice";
+ import UserPage from "../pages/Users";
+ import OrdersPage from "../pages/Orders";
++import ProductsPage from "../pages/Products";
++import WarehousePage from "../pages/Warehouse";
++import LocationsPage from "../pages/Locations";
++import StockAssignPage from "../pages/StockAssign";
++import WarehouseStockPage from "../pages/WarehouseStock";
++import PickingPage from "../pages/Picking";
++import ShipmentsPage from "../pages/Shipments";
++import ReportsPage from "../pages/Reports";
++import ActivityLogPage from "../pages/ActivityLogs";
+ 
+ export const Routes = createBrowserRouter([
+     {
+-        path:'/',
+-        Component:App,
+-        children:[
++        path: '/',
++        Component: App,
++        children: [
+             {
+-                path:'/',
++                path: '/',
+                 Component: HomePage
+             },
+             {
+@@ -28,10 +37,45 @@ export const Routes = createBrowserRouter([
+             {
+                 path: '/orders',
+                 Component: OrdersPage
++            },
++            {
++                path: '/products',
++                Component: ProductsPage
++            },
++            {
++                path: '/warehouses',
++                Component: WarehousePage
++            },
++            {
++                path: '/locations',
++                Component: LocationsPage
++            },
++            {
++                path: '/stock-assign',
++                Component: StockAssignPage
++            },
++            {
++                path: '/warehouse-stock',
++                Component: WarehouseStockPage
++            },
++            {
++                path: '/picking',
++                Component: PickingPage
++            },
++            {
++                path: '/shipments',
++                Component: ShipmentsPage
++            },
++            {
++                path: '/reports',
++                Component: ReportsPage
++            },
++            {
++                path: '/activity-logs',
++                Component: ActivityLogPage
+             }
+-            
+-            ,{
+-                path:'*',
++            , {
++                path: '*',
+                 Component: ErrorPage
+             }
+         ]
+@@ -39,11 +83,10 @@ export const Routes = createBrowserRouter([
+     {
+         path: '/login',
+         Component: Login,
+-        
++
+     },
+     {
+         path: '/register',
+         Component: Register
+     }
+ ])
+- 
+\ No newline at end of file
+diff --git a/frontend/src/provider/Store.tsx b/frontend/src/provider/Store.tsx
+index ac3b57d..05159b7 100644
+--- a/frontend/src/provider/Store.tsx
++++ b/frontend/src/provider/Store.tsx
+@@ -5,17 +5,39 @@ import { SidebarSlice } from "./slice/Sidebar.slice";
+ import { AuthApi } from "./queries/Auth.query";
+ import { UserApi } from "./queries/Users.query";
+ import { OrdersApi } from "./queries/Orders.query";
++import { ProductApi } from "./queries/Product.query";
++import { WarehouseApi } from "./queries/Warehouse.query";
++import { StockLocationApi } from "./queries/StockLocation.query";
++import { ShipmentApi } from "./queries/Shipment.query";
++import { ReportApi } from "./queries/Report.query";
++import { ActivityLogApi } from "./queries/ActivityLog.query";
+ 
+ export const store = configureStore({
+-    reducer:{
++    reducer: {
+         [UserSlice.name]: UserSlice.reducer,
+         [SidebarSlice.name]: SidebarSlice.reducer,
+         [AuthApi.reducerPath]: AuthApi.reducer,
+         [UserApi.reducerPath]: UserApi.reducer,
+-        [OrdersApi.reducerPath]: OrdersApi.reducer
++        [OrdersApi.reducerPath]: OrdersApi.reducer,
++        [ProductApi.reducerPath]: ProductApi.reducer,
++        [WarehouseApi.reducerPath]: WarehouseApi.reducer,
++        [StockLocationApi.reducerPath]: StockLocationApi.reducer,
++        [ShipmentApi.reducerPath]: ShipmentApi.reducer,
++        [ReportApi.reducerPath]: ReportApi.reducer,
++        [ActivityLogApi.reducerPath]: ActivityLogApi.reducer
+     },
+ 
+-    middleware: (d) => d().concat(AuthApi.middleware, UserApi.middleware, OrdersApi.middleware)
+-}) 
++    middleware: (d) => d().concat(
++        AuthApi.middleware,
++        UserApi.middleware,
++        OrdersApi.middleware,
++        ProductApi.middleware,
++        WarehouseApi.middleware,
++        StockLocationApi.middleware,
++        ShipmentApi.middleware,
++        ReportApi.middleware,
++        ActivityLogApi.middleware
++    )
++})
+ 
+ setupListeners(store.dispatch)
+\ No newline at end of file
+diff --git a/frontend/src/provider/queries/ActivityLog.query.ts b/frontend/src/provider/queries/ActivityLog.query.ts
+new file mode 100644
+index 0000000..c265641
+--- /dev/null
++++ b/frontend/src/provider/queries/ActivityLog.query.ts
+@@ -0,0 +1,21 @@
++import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
++
++export const ActivityLogApi = createApi({
++    reducerPath: 'ActivityLogApi',
++    baseQuery: fetchBaseQuery({ baseUrl: import.meta.env.VITE_BACKEND_URL }),
++    tagTypes: ['activityLogs'],
++    endpoints: (builder) => ({
++        getActivityLogs: builder.query<any, any>({
++            query: (obj) => ({
++                url: `/activity-log/get-all?page=${obj.page || 1}&entity=${obj.entity || ''}`,
++                method: 'GET',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            providesTags: ['activityLogs']
++        }),
++    }),
++})
++
++export const { useGetActivityLogsQuery } = ActivityLogApi
+diff --git a/frontend/src/provider/queries/Product.query.ts b/frontend/src/provider/queries/Product.query.ts
+new file mode 100644
+index 0000000..1bac660
+--- /dev/null
++++ b/frontend/src/provider/queries/Product.query.ts
+@@ -0,0 +1,80 @@
++import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
++
++export const ProductApi = createApi({
++    reducerPath: 'ProductApi',
++    baseQuery: fetchBaseQuery({ baseUrl: import.meta.env.VITE_BACKEND_URL }),
++    tagTypes: ['getAllProducts', 'getProduct'],
++    endpoints: (builder) => ({
++        createProduct: builder.mutation<any, any>({
++            query: (obj) => ({
++                url: '/product/create',
++                method: 'POST',
++                body: obj,
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            invalidatesTags: ['getAllProducts']
++        }),
++        getAllProducts: builder.query<any, any>({
++            query: (obj) => ({
++                url: `/product/get-all?query=${obj.query}&page=${obj.page}&lowStock=${obj.lowStock || false}`,
++                method: 'GET',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            providesTags: ['getAllProducts']
++        }),
++        getProductById: builder.query<any, any>({
++            query: (_id) => ({
++                url: '/product/get/' + _id,
++                method: 'GET',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            providesTags: ['getProduct']
++        }),
++        updateProduct: builder.mutation<any, any>({
++            query: ({ data, _id }) => ({
++                url: '/product/update/' + _id,
++                method: 'PATCH',
++                body: data,
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            invalidatesTags: ['getAllProducts', 'getProduct']
++        }),
++        deleteProduct: builder.mutation<any, any>({
++            query: (_id) => ({
++                url: '/product/delete/' + _id,
++                method: 'DELETE',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            invalidatesTags: ['getAllProducts']
++        }),
++        getProductsForSearch: builder.query<any, any>({
++            query: () => ({
++                url: '/product/get-search',
++                method: 'GET',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            providesTags: ['getAllProducts']
++        }),
++    }),
++})
++
++export const {
++    useCreateProductMutation,
++    useGetAllProductsQuery,
++    useGetProductByIdQuery,
++    useUpdateProductMutation,
++    useDeleteProductMutation,
++    useGetProductsForSearchQuery
++} = ProductApi
+diff --git a/frontend/src/provider/queries/Report.query.ts b/frontend/src/provider/queries/Report.query.ts
+new file mode 100644
+index 0000000..cc87d9b
+--- /dev/null
++++ b/frontend/src/provider/queries/Report.query.ts
+@@ -0,0 +1,56 @@
++import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
++
++export const ReportApi = createApi({
++    reducerPath: 'ReportApi',
++    baseQuery: fetchBaseQuery({ baseUrl: import.meta.env.VITE_BACKEND_URL }),
++    tagTypes: ['reports'],
++    endpoints: (builder) => ({
++        getInventoryValuation: builder.query<any, void>({
++            query: () => ({
++                url: '/report/inventory-valuation',
++                method: 'GET',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            providesTags: ['reports']
++        }),
++        getLowStockProducts: builder.query<any, void>({
++            query: () => ({
++                url: '/report/low-stock',
++                method: 'GET',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            providesTags: ['reports']
++        }),
++        getShipmentSummary: builder.query<any, any>({
++            query: (days = 30) => ({
++                url: `/report/shipment-summary?days=${days}`,
++                method: 'GET',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            providesTags: ['reports']
++        }),
++        getDashboardStats: builder.query<any, void>({
++            query: () => ({
++                url: '/report/dashboard',
++                method: 'GET',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            providesTags: ['reports']
++        }),
++    }),
++})
++
++export const {
++    useGetInventoryValuationQuery,
++    useGetLowStockProductsQuery,
++    useGetShipmentSummaryQuery,
++    useGetDashboardStatsQuery
++} = ReportApi
+diff --git a/frontend/src/provider/queries/Shipment.query.ts b/frontend/src/provider/queries/Shipment.query.ts
+new file mode 100644
+index 0000000..70167fc
+--- /dev/null
++++ b/frontend/src/provider/queries/Shipment.query.ts
+@@ -0,0 +1,80 @@
++import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
++
++export const ShipmentApi = createApi({
++    reducerPath: 'ShipmentApi',
++    baseQuery: fetchBaseQuery({ baseUrl: import.meta.env.VITE_BACKEND_URL }),
++    tagTypes: ['getAllShipments', 'getShipment', 'getShipmentsByProduct'],
++    endpoints: (builder) => ({
++        createShipment: builder.mutation<any, any>({
++            query: (obj) => ({
++                url: '/shipment/create',
++                method: 'POST',
++                body: obj,
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            invalidatesTags: ['getAllShipments', 'getShipmentsByProduct']
++        }),
++        getAllShipments: builder.query<any, any>({
++            query: (obj) => ({
++                url: `/shipment/get-all?page=${obj.page}&query=${obj.query || ''}&type=${obj.type || ''}`,
++                method: 'GET',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            providesTags: ['getAllShipments']
++        }),
++        getShipmentById: builder.query<any, any>({
++            query: (_id) => ({
++                url: '/shipment/get/' + _id,
++                method: 'GET',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            providesTags: ['getShipment']
++        }),
++        updateShipmentStatus: builder.mutation<any, any>({
++            query: ({ _id, status }) => ({
++                url: '/shipment/status/' + _id,
++                method: 'PATCH',
++                body: { status },
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            invalidatesTags: ['getAllShipments', 'getShipment']
++        }),
++        deleteShipment: builder.mutation<any, any>({
++            query: (_id) => ({
++                url: '/shipment/delete/' + _id,
++                method: 'DELETE',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            invalidatesTags: ['getAllShipments']
++        }),
++        getShipmentsByProduct: builder.query<any, any>({
++            query: (productId) => ({
++                url: '/shipment/by-product/' + productId,
++                method: 'GET',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            providesTags: ['getShipmentsByProduct']
++        }),
++    }),
++})
++
++export const {
++    useCreateShipmentMutation,
++    useGetAllShipmentsQuery,
++    useGetShipmentByIdQuery,
++    useUpdateShipmentStatusMutation,
++    useDeleteShipmentMutation,
++    useGetShipmentsByProductQuery
++} = ShipmentApi
+diff --git a/frontend/src/provider/queries/StockLocation.query.ts b/frontend/src/provider/queries/StockLocation.query.ts
+new file mode 100644
+index 0000000..f603977
+--- /dev/null
++++ b/frontend/src/provider/queries/StockLocation.query.ts
+@@ -0,0 +1,82 @@
++import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
++
++export const StockLocationApi = createApi({
++    reducerPath: 'StockLocationApi',
++    baseQuery: fetchBaseQuery({ baseUrl: import.meta.env.VITE_BACKEND_URL }),
++    tagTypes: ['getStockByProduct', 'getAllStock'],
++    endpoints: (builder) => ({
++        assignStock: builder.mutation<any, any>({
++            query: (obj) => ({
++                url: '/stock/assign',
++                method: 'POST',
++                body: obj,
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            invalidatesTags: ['getStockByProduct', 'getAllStock']
++        }),
++        transferStock: builder.mutation<any, any>({
++            query: (obj) => ({
++                url: '/stock/transfer',
++                method: 'POST',
++                body: obj,
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            invalidatesTags: ['getStockByProduct', 'getAllStock']
++        }),
++        pickStock: builder.mutation<any, any>({
++            query: (obj) => ({
++                url: '/stock/pick',
++                method: 'POST',
++                body: obj,
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            invalidatesTags: ['getStockByProduct', 'getAllStock']
++        }),
++        receiveStock: builder.mutation<any, any>({
++            query: (obj) => ({
++                url: '/stock/receive',
++                method: 'POST',
++                body: obj,
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            invalidatesTags: ['getStockByProduct', 'getAllStock']
++        }),
++        getStockByProduct: builder.query<any, any>({
++            query: (productId) => ({
++                url: '/stock/by-product/' + productId,
++                method: 'GET',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            providesTags: ['getStockByProduct']
++        }),
++        getAllStockLocations: builder.query<any, any>({
++            query: (page = 1) => ({
++                url: `/stock/all?page=${page}`,
++                method: 'GET',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            providesTags: ['getAllStock']
++        }),
++    }),
++})
++
++export const {
++    useAssignStockMutation,
++    useTransferStockMutation,
++    usePickStockMutation,
++    useReceiveStockMutation,
++    useGetStockByProductQuery,
++    useGetAllStockLocationsQuery
++} = StockLocationApi
+diff --git a/frontend/src/provider/queries/Warehouse.query.ts b/frontend/src/provider/queries/Warehouse.query.ts
+new file mode 100644
+index 0000000..ea1a979
+--- /dev/null
++++ b/frontend/src/provider/queries/Warehouse.query.ts
+@@ -0,0 +1,125 @@
++import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
++
++export const WarehouseApi = createApi({
++    reducerPath: 'WarehouseApi',
++    baseQuery: fetchBaseQuery({ baseUrl: import.meta.env.VITE_BACKEND_URL }),
++    tagTypes: ['getAllWarehouses', 'getWarehouse', 'getLocations', 'getStockReport'],
++    endpoints: (builder) => ({
++        createWarehouse: builder.mutation<any, any>({
++            query: (obj) => ({
++                url: '/warehouse/create',
++                method: 'POST',
++                body: obj,
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            invalidatesTags: ['getAllWarehouses']
++        }),
++        getAllWarehouses: builder.query<any, any>({
++            query: (obj) => ({
++                url: `/warehouse/get-all?query=${obj.query}&page=${obj.page}`,
++                method: 'GET',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            providesTags: ['getAllWarehouses']
++        }),
++        getWarehousesForSearch: builder.query<any, any>({
++            query: () => ({
++                url: '/warehouse/get-search',
++                method: 'GET',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            providesTags: ['getAllWarehouses']
++        }),
++        getWarehouseById: builder.query<any, any>({
++            query: (_id) => ({
++                url: '/warehouse/get/' + _id,
++                method: 'GET',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            providesTags: ['getWarehouse']
++        }),
++        updateWarehouse: builder.mutation<any, any>({
++            query: ({ data, _id }) => ({
++                url: '/warehouse/update/' + _id,
++                method: 'PATCH',
++                body: data,
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            invalidatesTags: ['getAllWarehouses', 'getWarehouse']
++        }),
++        deleteWarehouse: builder.mutation<any, any>({
++            query: (_id) => ({
++                url: '/warehouse/delete/' + _id,
++                method: 'DELETE',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            invalidatesTags: ['getAllWarehouses']
++        }),
++        createLocation: builder.mutation<any, any>({
++            query: (obj) => ({
++                url: '/warehouse/location',
++                method: 'POST',
++                body: obj,
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            invalidatesTags: ['getLocations']
++        }),
++        getLocations: builder.query<any, any>({
++            query: (warehouseId) => ({
++                url: '/warehouse/locations/' + warehouseId,
++                method: 'GET',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            providesTags: ['getLocations']
++        }),
++        deleteLocation: builder.mutation<any, any>({
++            query: (_id) => ({
++                url: '/warehouse/location/' + _id,
++                method: 'DELETE',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            invalidatesTags: ['getLocations']
++        }),
++        getWarehouseStockReport: builder.query<any, any>({
++            query: (warehouseId) => ({
++                url: '/warehouse/stock-report/' + warehouseId,
++                method: 'GET',
++                headers: {
++                    'Authorization': 'Bearer ' + localStorage.getItem("token")
++                }
++            }),
++            providesTags: ['getStockReport']
++        }),
++    }),
++})
++
++export const {
++    useCreateWarehouseMutation,
++    useGetAllWarehousesQuery,
++    useGetWarehousesForSearchQuery,
++    useGetWarehouseByIdQuery,
++    useUpdateWarehouseMutation,
++    useDeleteWarehouseMutation,
++    useCreateLocationMutation,
++    useGetLocationsQuery,
++    useDeleteLocationMutation,
++    useGetWarehouseStockReportQuery
++} = WarehouseApi
