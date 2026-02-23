@@ -1,0 +1,49 @@
+
+import { useDispatch, } from 'react-redux'
+import { collapsedSidebar, toggleSidebar } from '../provider/slice/Sidebar.slice';
+import { HiOutlineMenuAlt3 } from "react-icons/hi";
+import { IoLogOutOutline } from "react-icons/io5";
+import { removeUser } from '../provider/slice/user.slice';
+import { ThemeSlicePath, setTheme } from '../provider/slice/Theme.slice';
+import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+const Header = () => {
+
+  const dispatch = useDispatch();
+  const theme = useSelector(ThemeSlicePath)
+
+  const sidebarHandler = () => dispatch(collapsedSidebar())
+  const sidebarHandlerToggle = () => dispatch(toggleSidebar())
+  const navigate = useNavigate()
+
+  const logoutHandler = () => {
+    try {
+      localStorage.removeItem('token')
+      dispatch(removeUser())
+      navigate("/login");
+    } catch (error: any) {
+      console.log(error.message)
+    }
+  }
+
+  return (
+    <>
+      <header className="py-4 shadow md px-10">
+        <div className="nav flex items-center justify-between">
+          <div className="btn">
+            <button className='lg:hidden' onClick={sidebarHandlerToggle}><HiOutlineMenuAlt3 className='text-2xl' /></button>
+            <button className='hidden lg:flex' onClick={sidebarHandler}><HiOutlineMenuAlt3 className='text-2xl' /></button></div>
+          <div className="end flex items-center gap-2">
+            <button title={theme === 'dark' ? 'Light mode' : 'Dark mode'} onClick={() => dispatch(setTheme(theme === 'dark' ? 'light' : 'dark'))}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+              {theme === 'dark' ? <span className="text-xl">☀️</span> : <span className="text-xl">🌙</span>}
+            </button>
+            <button title='logout' className='hidden lg:flex p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700' onClick={logoutHandler}><IoLogOutOutline className='text-2xl' /></button>
+          </div>
+        </div>
+      </header>
+    </>
+  )
+}
+
+export default Header
