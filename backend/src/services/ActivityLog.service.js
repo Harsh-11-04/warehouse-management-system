@@ -14,12 +14,12 @@ class ActivityLogService {
         })
     }
 
-    // Get all activity logs for a user
+    // Get all activity logs (admin sees everything)
     static async getActivityLogs(user, page = 1, entity = '') {
         const limit = 20
         const skip = (Number(page) - 1) * limit
 
-        const filters = { user }
+        const filters = {}
         if (entity && entity !== '') {
             filters.entity = entity
         }

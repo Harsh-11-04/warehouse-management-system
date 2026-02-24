@@ -20,10 +20,13 @@ class OrderService {
         const limit = 10
         const perPage = (Number(page) - 1) * limit
 
-
         const queryies = {
-            user,
-            items: {
+            user
+        }
+
+        // Only add search query if it exists
+        if (query && query.trim()) {
+            queryies.items = {
                 $elemMatch: {
                     name: { $regex: query, $options: 'i' }
                 }

@@ -12,12 +12,12 @@ router.use(Authentication)
 router.get("/get-all", WarehouseValidation.query_page, Validation, WarehouseController.getAllWarehouses)
 router.get("/get-search", WarehouseController.getAllWarehousesForSearch)
 router.get("/get/:id", WarehouseValidation.Params_id, Validation, WarehouseController.getWarehouseById)
-router.post("/create", authorize('admin'), WarehouseValidation.CreateWarehouse, Validation, WarehouseController.createWarehouse)
-router.patch("/update/:id", authorize('admin'), WarehouseValidation.Params_id, Validation, WarehouseController.updateWarehouse)
-router.delete("/delete/:id", authorize('admin'), WarehouseValidation.Params_id, Validation, WarehouseController.deleteWarehouse)
+router.post("/create", authorize('admin', 'manager'), WarehouseValidation.CreateWarehouse, Validation, WarehouseController.createWarehouse)
+router.patch("/update/:id", authorize('admin', 'manager'), WarehouseValidation.Params_id, Validation, WarehouseController.updateWarehouse)
+router.delete("/delete/:id", authorize('admin', 'manager'), WarehouseValidation.Params_id, Validation, WarehouseController.deleteWarehouse)
 
 // Storage Locations
-router.post("/location", authorize('admin'), WarehouseValidation.CreateLocation, Validation, WarehouseController.createLocation)
+router.post("/location", authorize('admin', 'manager'), WarehouseValidation.CreateLocation, Validation, WarehouseController.createLocation)
 router.get("/locations/:warehouseId", WarehouseValidation.Params_warehouseId, Validation, WarehouseController.getLocations)
 router.delete("/location/:id", authorize('admin', 'manager'), WarehouseValidation.Params_id, Validation, WarehouseController.deleteLocation)
 

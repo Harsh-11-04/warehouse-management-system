@@ -1,5 +1,5 @@
 
-import   { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Chart } from 'primereact/chart';
 import { useDashboardDataQuery } from '../../../provider/queries/Users.query';
 import { useLocation } from 'react-router-dom';
@@ -12,25 +12,22 @@ export default function PieChartDemo() {
     const location = useLocation()
 
     useEffect(() => {
-        if (!data) {
-            return
-        }
+        if (!data) return;
 
-        const documentStyle = getComputedStyle(document.documentElement);
         const chartData = {
-            labels: ['user', 'orders', 'sell'],
+            labels: ['Revenue (Sales)', 'Order Activities', 'User Interactions'],
             datasets: [
                 {
-                    data: [data.consumers, data.orders, data.sell],
+                    data: [data.sell, data.orders, data.consumers],
                     backgroundColor: [
-                        documentStyle.getPropertyValue('--blue-500'),
-                        documentStyle.getPropertyValue('--yellow-500'),
-                        documentStyle.getPropertyValue('--green-500')
+                        '#10b981', // green-500 (Revenue)
+                        '#3b82f6', // blue-500 (Orders)
+                        '#f59e0b'  // amber-500 (Users)
                     ],
                     hoverBackgroundColor: [
-                        documentStyle.getPropertyValue('--blue-400'),
-                        documentStyle.getPropertyValue('--yellow-400'),
-                        documentStyle.getPropertyValue('--green-400')
+                        '#059669',
+                        '#2563eb',
+                        '#d97706'
                     ]
                 }
             ]
@@ -38,27 +35,32 @@ export default function PieChartDemo() {
         const options = {
             plugins: {
                 legend: {
+                    position: 'bottom',
                     labels: {
-                        usePointStyle: true
+                        usePointStyle: true,
+                        padding: 20
                     }
                 }
-            }
+            },
+            maintainAspectRatio: false,
+            cutout: '60%' // Make it a doughnut for a more modern look
         };
 
         setChartData(chartData);
         setChartOptions(options);
     }, [data, location]);
-    if (isFetching || isLoading) {
-        return <Loader />
-    }
-    if (isError) {
-        return <>
-            something went wrong
-        </>
-    }
 
-    return ( 
-            <Chart type="pie" data={chartData} options={chartOptions} className="w-full lg:w-1/2" />
-      
+    if (isFetching || isLoading) return <Loader />
+    if (isError) return <div className="p-4 text-red-500">Failed to load analytics</div>
+
+    return (
+        <div className="w-full lg:w-1/2 p-2">
+            <div className="bg-white p-4 rounded-xl border shadow-sm h-[350px]">
+                <h4 className="text-sm font-semibold text-gray-600 mb-4">Revenue & Activity</h4>
+                <div className="flex justify-center h-[250px]">
+                    <Chart type="doughnut" data={chartData} options={chartOptions} className="w-full max-w-[250px]" />
+                </div>
+            </div>
+        </div>
     )
 }

@@ -4,7 +4,7 @@ const catchAsync = require("../utils/CatchAsync");
 
 class ReorderSuggestionController {
     static getAllSuggestions = catchAsync(async (req, res) => {
-        const suggestions = await ReorderSuggestionService.getAllSuggestions(req.user);
+        const suggestions = await ReorderSuggestionService.getAllSuggestions(req.query.status);
         res.status(httpStatus.OK).send(suggestions);
     });
 

@@ -73,7 +73,9 @@ const WarehouseStockPage = () => {
                       <td className="p-2">{loc.rack}</td>
                       <td className="p-2">{loc.bin}</td>
                       <td className="p-2">
-                        <div className="inline-block bg-white p-1 rounded border">
+                        <div className="inline-block bg-white p-1 rounded border cursor-pointer hover:shadow-md transition-shadow"
+                          title="Click to view stock at this location"
+                          onClick={() => { setScannedLocationId(loc._id); fetchScan(loc._id) }}>
                           <QRCode value={loc._id} size={56} />
                         </div>
                       </td>

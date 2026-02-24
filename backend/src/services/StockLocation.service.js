@@ -9,6 +9,11 @@ class StockLocationService {
 
     static async assignStock(user, body) {
         const { productId, locationId, quantity } = body
+        const assignQty = Number(quantity)
+
+        if (assignQty <= 0) {
+            throw new ApiError(httpStatus.BAD_REQUEST, "Quantity must be greater than 0")
+        }
 
         const product = await ProductModel.findOne({ _id: productId, user })
         if (!product) {
@@ -22,13 +27,13 @@ class StockLocationService {
 
         const existing = await StockLocationModel.findOne({ product: productId, location: locationId })
         if (existing) {
-            existing.quantity += Number(quantity)
+            existing.quantity += assignQty
             await existing.save()
         } else {
             await StockLocationModel.create({
                 product: productId,
                 location: locationId,
-                quantity: Number(quantity),
+                quantity: assignQty,
                 user
             })
         }
@@ -38,10 +43,10 @@ class StockLocationService {
         await StockHistoryService.log({
             productId,
             toLocationId: locationId,
-            quantity: Number(quantity),
+            quantity: assignQty,
             action: 'Assign',
             userId: user,
-            reference: `Assigned ${quantity} units`
+            reference: `Assigned ${assignQty} units`
         })
 
         return { msg: "Stock Assigned Successfully" }
@@ -51,20 +56,26 @@ class StockLocationService {
         const { fromLocationId, toLocationId, productId, quantity } = body
         const transferQty = Number(quantity)
 
+        if (transferQty <= 0) {
+            throw new ApiError(httpStatus.BAD_REQUEST, "Quantity must be greater than 0")
+        }
+
         if (fromLocationId === toLocationId) {
             throw new ApiError(httpStatus.BAD_REQUEST, "Source and destination locations must be different")
         }
 
-        const toLocation = await StorageLocationModel.findOne({ _id: toLocationId, user })
+        const [toLocation, fromStock] = await Promise.all([
+            StorageLocationModel.findOne({ _id: toLocationId, user }),
+            StockLocationModel.findOne({
+                product: productId,
+                location: fromLocationId,
+                user
+            })
+        ])
+
         if (!toLocation) {
             throw new ApiError(httpStatus.NOT_FOUND, "Destination location not found or access denied")
         }
-
-        const fromStock = await StockLocationModel.findOne({
-            product: productId,
-            location: fromLocationId,
-            user
-        })
 
         if (!fromStock) {
             throw new ApiError(httpStatus.NOT_FOUND, "No stock found at source location")
@@ -118,6 +129,10 @@ class StockLocationService {
         const { productId, locationId, quantity } = body
         const pickQty = Number(quantity)
 
+        if (pickQty <= 0) {
+            throw new ApiError(httpStatus.BAD_REQUEST, "Quantity must be greater than 0")
+        }
+
         const stock = await StockLocationModel.findOne({
             product: productId,
             location: locationId,
@@ -157,12 +172,19 @@ class StockLocationService {
         const { productId, locationId, quantity } = body
         const receiveQty = Number(quantity)
 
-        const product = await ProductModel.findOne({ _id: productId, user })
+        if (receiveQty <= 0) {
+            throw new ApiError(httpStatus.BAD_REQUEST, "Quantity must be greater than 0")
+        }
+
+        const [product, location] = await Promise.all([
+            ProductModel.findOne({ _id: productId, user }),
+            StorageLocationModel.findOne({ _id: locationId, user })
+        ])
+
         if (!product) {
             throw new ApiError(httpStatus.NOT_FOUND, "Product Not Found")
         }
 
-        const location = await StorageLocationModel.findOne({ _id: locationId, user })
         if (!location) {
             throw new ApiError(httpStatus.NOT_FOUND, "Storage Location Not Found")
         }

@@ -10,9 +10,11 @@ class StockHistoryService {
             action,
             userId,
             reference = '',
-            metadata = {}
+            metadata = {},
+            session = null
         } = params
-        await StockHistoryModel.create({
+        
+        const historyData = {
             product: productId,
             fromLocation: fromLocationId,
             toLocation: toLocationId,
@@ -21,7 +23,13 @@ class StockHistoryService {
             user: userId,
             reference,
             metadata
-        })
+        }
+
+        if (session) {
+            await StockHistoryModel.create([historyData], { session })
+        } else {
+            await StockHistoryModel.create(historyData)
+        }
     }
 }
 

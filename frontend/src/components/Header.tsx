@@ -31,7 +31,7 @@ const Header = () => {
             <button className='lg:hidden' onClick={sidebarHandlerToggle}><HiOutlineMenuAlt3 className='text-2xl' /></button>
             <button className='hidden lg:flex' onClick={sidebarHandler}><HiOutlineMenuAlt3 className='text-2xl' /></button></div>
           <div className="end flex items-center gap-2">
-            <button title='logout' className='hidden lg:flex p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700' onClick={logoutHandler}><IoLogOutOutline className='text-2xl' /></button>
+            <button title='logout' className='hidden lg:flex p-2 rounded-lg hover:bg-gray-100' onClick={logoutHandler}><IoLogOutOutline className='text-2xl' /></button>
           </div>
         </div>
       </header>

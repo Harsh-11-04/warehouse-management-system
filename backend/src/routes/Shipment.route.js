@@ -15,6 +15,6 @@ router.get("/by-product/:productId", ShipmentValidation.Params_productId, Valida
 
 router.post("/create", ShipmentValidation.CreateShipment, Validation, ShipmentController.CreateShipment)
 router.patch("/status/:id", ShipmentValidation.UpdateStatus, Validation, ShipmentController.UpdateShipmentStatus)
-router.delete("/delete/:id", authorize('admin'), ShipmentValidation.Params_id, Validation, ShipmentController.DeleteShipment)
+router.delete("/delete/:id", authorize('admin', 'manager'), ShipmentValidation.Params_id, Validation, ShipmentController.DeleteShipment)
 
 module.exports = router

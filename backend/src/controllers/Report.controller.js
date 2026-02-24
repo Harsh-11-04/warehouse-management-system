@@ -42,6 +42,33 @@ class ReportController {
         const result = await ReportService.getProductMovementHistory(req.user, productId, days)
         res.status(200).json(result)
     })
+
+    static ExportWarehouseStockCSV = CatchAsync(async (req, res) => {
+        const { warehouseId } = req.query
+        const csvData = await ReportService.getWarehouseStockReportCSV(req.user, warehouseId)
+        
+        res.setHeader('Content-Type', csvData.mimeType)
+        res.setHeader('Content-Disposition', `attachment; filename="${csvData.filename}"`)
+        res.send(csvData.data)
+    })
+
+    static ExportLowStockCSV = CatchAsync(async (req, res) => {
+        const csvData = await ReportService.getLowStockReportCSV(req.user)
+        
+        res.setHeader('Content-Type', csvData.mimeType)
+        res.setHeader('Content-Disposition', `attachment; filename="${csvData.filename}"`)
+        res.send(csvData.data)
+    })
+
+    static ExportProductMovementCSV = CatchAsync(async (req, res) => {
+        const { productId } = req.query
+        const days = parseInt(req.query.days) || 30
+        const csvData = await ReportService.getProductMovementCSV(req.user, productId, days)
+        
+        res.setHeader('Content-Type', csvData.mimeType)
+        res.setHeader('Content-Disposition', `attachment; filename="${csvData.filename}"`)
+        res.send(csvData.data)
+    })
 }
 
 module.exports = ReportController

@@ -41,6 +41,30 @@ const routes = [
     {
         path: '/reorder-suggestions',
         route: require("./ReorderSuggestion.route")
+    },
+    {
+        path: '/dashboard',
+        route: require("./Dashboard.route")
+    },
+    {
+        path: '/stock-history',
+        route: require("./StockHistory.route")
+    },
+    {
+        path: '/barcode',
+        route: require("./Barcode.route")
+    },
+    {
+        path: '/draft-purchase-orders',
+        route: require("./DraftPurchaseOrder.route")
+    },
+    {
+        path: '/admin',
+        route: require("./Admin.route")
+    },
+    {
+        path: '/demo',
+        route: require("./DemoData.route")
     }
 ]
 

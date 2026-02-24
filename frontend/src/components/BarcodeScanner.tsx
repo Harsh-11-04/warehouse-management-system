@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
+import { Html5Qrcode } from 'html5-qrcode';
 
 interface BarcodeScannerProps {
     onScan: (value: string) => void;
@@ -10,77 +11,78 @@ interface BarcodeScannerProps {
 const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
     const [code, setCode] = useState('');
     const [cameraError, setCameraError] = useState<string | null>(null);
-    const videoRef = useRef<HTMLVideoElement | null>(null);
     const [isScanning, setIsScanning] = useState(false);
+    const scannerRef = useRef<Html5Qrcode | null>(null);
+    const runningRef = useRef(false);
+    const containerId = 'qr-reader-container';
 
     useEffect(() => {
-        let stream: MediaStream | null = null;
         let cancelled = false;
 
-        const startCamera = async () => {
+        const startScanner = async () => {
             try {
-                if (!navigator.mediaDevices?.getUserMedia) {
-                    setCameraError('Camera not supported in this browser');
-                    return;
-                }
+                const scanner = new Html5Qrcode(containerId);
+                scannerRef.current = scanner;
 
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment' },
-                });
-
-                if (!videoRef.current) return;
-
-                videoRef.current.srcObject = stream;
-                await videoRef.current.play();
-                setIsScanning(true);
-
-                const Detector = (window as any).BarcodeDetector;
-                if (!Detector) {
-                    setCameraError('BarcodeDetector API not available; use manual entry.');
-                    return;
-                }
-
-                const detector = new Detector({ formats: ['qr_code', 'code_128', 'code_39', 'ean_13'] });
-
-                const scanFrame = async () => {
-                    if (cancelled || !videoRef.current) return;
-                    try {
-                        const barcodes = await detector.detect(videoRef.current);
-                        if (barcodes && barcodes.length > 0) {
-                            const value = barcodes[0].rawValue || barcodes[0].rawValue || barcodes[0].rawValue;
-                            if (value) {
-                                onScan(value);
-                                return;
-                            }
+                await scanner.start(
+                    { facingMode: 'environment' },
+                    {
+                        fps: 10,
+                        qrbox: { width: 200, height: 200 },
+                    },
+                    (decodedText) => {
+                        if (!cancelled) {
+                            cancelled = true;
+                            runningRef.current = false;
+                            scanner.stop().catch(() => { });
+                            onScan(decodedText);
                         }
-                    } catch (err) {
-                        // swallow detection errors and keep trying
+                    },
+                    () => {
+                        // QR code not found in frame — keep scanning
                     }
-                    requestAnimationFrame(scanFrame);
-                };
+                );
 
-                requestAnimationFrame(scanFrame);
+                if (!cancelled) {
+                    runningRef.current = true;
+                    setIsScanning(true);
+                }
             } catch (err: any) {
-                setCameraError(err?.message || 'Unable to access camera');
+                if (!cancelled) {
+                    setCameraError(err?.message || 'Unable to access camera');
+                }
             }
         };
 
-        startCamera();
+        startScanner();
 
         return () => {
             cancelled = true;
-            setIsScanning(false);
-            if (stream) {
-                stream.getTracks().forEach((t) => t.stop());
+            if (scannerRef.current && runningRef.current) {
+                runningRef.current = false;
+                scannerRef.current.stop().catch(() => { });
             }
+            scannerRef.current = null;
         };
-    }, [onScan]);
+    }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (code.trim()) {
+            if (scannerRef.current && runningRef.current) {
+                runningRef.current = false;
+                scannerRef.current.stop().catch(() => { });
+            }
             onScan(code.trim());
         }
+    };
+
+    const handleClose = () => {
+        if (scannerRef.current && runningRef.current) {
+            runningRef.current = false;
+            scannerRef.current.stop().catch(() => { });
+        }
+        onClose();
     };
 
     return (
@@ -88,22 +90,17 @@ const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
             <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
                 <div className="p-4 border-b flex justify-between items-center bg-gray-50">
                     <h3 className="font-bold text-gray-700">Scan Location</h3>
-                    <Button icon="pi pi-times" onClick={onClose} className="p-button-text p-button-rounded p-button-secondary" />
+                    <Button icon="pi pi-times" onClick={handleClose} className="p-button-text p-button-rounded p-button-secondary" />
                 </div>
 
                 <div className="p-4 grid gap-4 md:grid-cols-2">
                     <div className="flex flex-col gap-2">
                         <p className="text-xs text-gray-500 mb-1">
-                            Point your camera at the rack/bin QR or barcode. When a code is detected,
+                            Point your camera at a QR code. When detected,
                             the location will be looked up automatically.
                         </p>
-                        <div className="rounded-lg overflow-hidden border bg-black/80 flex items-center justify-center h-[220px]">
-                            <video
-                                ref={videoRef}
-                                className="w-full h-full object-cover"
-                                muted
-                                playsInline
-                            />
+                        <div className="rounded-lg overflow-hidden border bg-black/80 flex items-center justify-center" style={{ minHeight: '220px' }}>
+                            <div id={containerId} style={{ width: '100%' }} />
                             {!isScanning && !cameraError && (
                                 <span className="absolute text-xs text-gray-200">Starting camera…</span>
                             )}

@@ -102,7 +102,7 @@ class WarehouseService {
         }
 
         const locations = await StorageLocationModel.find({ warehouse: warehouseId })
-            .select("rack bin isActive")
+            .select("rack bin zone capacity isActive")
             .sort({ rack: 1, bin: 1 })
 
         return { locations, warehouse: warehouse.name }

@@ -33,12 +33,12 @@ const ShipmentsPage = () => {
   const type = (searchParams.get('type') as 'Inbound' | 'Outbound' | null) || ''
 
   const [search, setSearch] = useState(query)
-  const [selectedType, setSelectedType] = useState<string | ''>(type)
+  const [selectedType, setSelectedType] = useState<'Inbound' | 'Outbound' | ''>(type)
 
   const { data, isLoading, isError } = useGetAllShipmentsQuery({
     page,
     query,
-    type: selectedType || undefined,
+    type: (selectedType || undefined) as 'Inbound' | 'Outbound' | undefined,
   })
 
   const [createShipment, { isLoading: creating }] = useCreateShipmentMutation()
@@ -54,7 +54,7 @@ const ShipmentsPage = () => {
 
   const user = useSelector(UserSlicePath) as { role?: string } | null
   const role = user?.role || 'warehouse_staff'
-  const isAdmin = role === 'admin'
+  const canManage = role === 'admin' || role === 'manager'
 
   const shipments = data?.shipments || []
 
@@ -149,6 +149,8 @@ const ShipmentsPage = () => {
         <Dropdown
           value={selectedType}
           options={typeOptions}
+          optionLabel="label"
+          optionValue="value"
           onChange={(e) => setSelectedType(e.value)}
           placeholder="Type"
           className="w-full md:w-40"
@@ -157,23 +159,25 @@ const ShipmentsPage = () => {
       </form>
 
       <div className="grid lg:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-xl border shadow-sm p-4 space-y-3">
-          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Create Shipment</h2>
+        <div className="bg-white rounded-xl border shadow-sm p-4 space-y-3">
+          <h2 className="text-sm font-semibold text-gray-700 mb-1">Create Shipment</h2>
           <div className="grid gap-2 text-sm">
             <div>
-              <label className="block mb-1 text-xs text-gray-500 dark:text-gray-400">Type</label>
+              <label className="block mb-1 text-xs text-gray-500">Type</label>
               <Dropdown
                 value={form.type}
                 options={[
                   { label: 'Inbound', value: 'Inbound' },
                   { label: 'Outbound', value: 'Outbound' },
                 ]}
+                optionLabel="label"
+                optionValue="value"
                 onChange={(e) => setForm({ ...form, type: e.value })}
                 className="w-full"
               />
             </div>
             <div>
-              <label className="block mb-1 text-xs text-gray-500 dark:text-gray-400">Product ID</label>
+              <label className="block mb-1 text-xs text-gray-500">Product ID</label>
               <InputText
                 value={form.productId}
                 onChange={(e) => setForm({ ...form, productId: e.target.value })}
@@ -181,7 +185,7 @@ const ShipmentsPage = () => {
               />
             </div>
             <div>
-              <label className="block mb-1 text-xs text-gray-500 dark:text-gray-400">Quantity</label>
+              <label className="block mb-1 text-xs text-gray-500">Quantity</label>
               <InputText
                 value={form.quantity}
                 onChange={(e) => setForm({ ...form, quantity: e.target.value })}
@@ -191,7 +195,7 @@ const ShipmentsPage = () => {
               />
             </div>
             <div>
-              <label className="block mb-1 text-xs text-gray-500 dark:text-gray-400">Notes</label>
+              <label className="block mb-1 text-xs text-gray-500">Notes</label>
               <InputText
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
@@ -209,8 +213,8 @@ const ShipmentsPage = () => {
           />
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl border shadow-sm p-4 lg:col-span-2">
-          <div className="flex items-center justify-between mb-2 text-xs text-gray-500 dark:text-gray-400">
+        <div className="bg-white rounded-xl border shadow-sm p-4 lg:col-span-2">
+          <div className="flex items-center justify-between mb-2 text-xs text-gray-500">
             <span>
               Page {page} • {shipments.length} items
             </span>
@@ -239,7 +243,7 @@ const ShipmentsPage = () => {
           </div>
           <div className="overflow-auto max-h-[420px]">
             <table className="w-full text-xs">
-              <thead className="bg-gray-50 dark:bg-gray-900">
+              <thead className="bg-gray-50">
                 <tr>
                   <th className="text-left p-2">Type</th>
                   <th className="text-left p-2">Product</th>
@@ -253,14 +257,13 @@ const ShipmentsPage = () => {
               <tbody>
                 {shipments.length ? (
                   shipments.map((s: any) => (
-                    <tr key={s._id} className="border-t border-gray-100 dark:border-gray-700">
+                    <tr key={s._id} className="border-t border-gray-100">
                       <td className="p-2">
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            s.type === 'Inbound'
-                              ? 'bg-green-50 text-green-700'
-                              : 'bg-orange-50 text-orange-700'
-                          }`}
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${s.type === 'Inbound'
+                            ? 'bg-green-50 text-green-700'
+                            : 'bg-orange-50 text-orange-700'
+                            }`}
                         >
                           {s.type}
                         </span>
@@ -274,8 +277,10 @@ const ShipmentsPage = () => {
                         <Dropdown
                           value={s.status}
                           options={statusOptions}
+                          optionLabel="label"
+                          optionValue="value"
                           onChange={(e) => changeStatus(s._id, e.value)}
-                          disabled={updating || !isAdmin}
+                          disabled={updating || !canManage}
                           className="w-28 text-xs"
                         />
                       </td>
@@ -286,7 +291,7 @@ const ShipmentsPage = () => {
                         {s.handledBy?.name || 'N/A'}
                       </td>
                       <td className="p-2">
-                        {isAdmin && (
+                        {canManage && (
                           <Button
                             icon="pi pi-trash"
                             size="small"

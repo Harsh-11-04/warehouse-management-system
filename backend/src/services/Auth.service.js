@@ -2,7 +2,9 @@ const httpStatus = require("http-status")
 const { UserModel, ProfileModel } = require("../models")
 const ApiError = require("../utils/ApiError")
 const { generatoken } = require("../utils/Token.utils")
-const axios = require("axios");
+const axios = require("axios")
+const bcrypt = require("bcryptjs")
+
 class AuthService {
     static async RegisterUser(body) {
 
@@ -35,8 +37,13 @@ class AuthService {
             return
         }
 
+        // Hash password before saving
+        const hashedPassword = await bcrypt.hash(password, 10)
+
         const user = await UserModel.create({
-            email, password, name
+            email,
+            password: hashedPassword,
+            name
         })
 
         const tokend = generatoken(user)
@@ -76,7 +83,9 @@ class AuthService {
             return
         }
 
-        if (password !== checkExist.password) {
+        // Compare hashed password
+        const isPasswordValid = await bcrypt.compare(password, checkExist.password)
+        if (!isPasswordValid) {
             throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Credentials")
             return
         }
@@ -91,7 +100,7 @@ class AuthService {
     }
     static async ProfileService(user) {
 
-        const checkExist = await UserModel.findById(user).select("name email")
+        const checkExist = await UserModel.findById(user).select("name email role")
         if (!checkExist) {
             throw new ApiError(httpStatus.BAD_REQUEST, "User Not Regisrered")
             return

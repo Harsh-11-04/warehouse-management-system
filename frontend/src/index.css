@@ -2,20 +2,101 @@
 @tailwind components;
 @tailwind utilities;
 
-.p-dialog-footer{
-        display: flex  !important;
-            justify-content: end !important;;
-            gap: 22px !important;;
+.p-dialog-footer {
+  display: flex !important;
+  justify-content: end !important;
+  ;
+  gap: 22px !important;
+  ;
 }
 
-
-
-.p-dropdown-filter-container .p-dropdown-filter{
-    /* @apply outline-none px-4 py-3 border-1 border-black; */
-    outline: none;
-    padding: 5px 15px;
-    border: .3px solid rgb(103, 103, 103);
-    
+.p-dropdown-filter-container .p-dropdown-filter {
+  outline: none;
+  padding: 5px 15px;
+  border: .3px solid rgb(103, 103, 103);
 }
 
- 
+/* ─── Fix dropdown overflow ─── */
+.p-dropdown {
+  max-width: 100%;
+}
+
+.p-dropdown .p-dropdown-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Fix table cell overflow ─── */
+.overflow-ellipsis-cell {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Consistent page spacing inside sidebar layout ─── */
+.page-content {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* ─── Print styles: only show report content ─── */
+@media print {
+
+  /* Hide sidebar, header, and navigation */
+  .ps-sidebar-root,
+  .ps-sidebar-container,
+  header,
+  nav,
+  .p-button,
+  button {
+    display: none !important;
+  }
+
+  /* Make the content area fill the page */
+  body,
+  #root,
+  #root>div {
+    min-height: auto !important;
+    background: white !important;
+  }
+
+  /* Remove layout flex so content fills width */
+  .flex.items-start {
+    display: block !important;
+  }
+
+  /* Ensure tables print fully */
+  .overflow-auto,
+  .max-h-80,
+  .max-h-72,
+  [class*="max-h-"] {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Clean up spacing */
+  .shadow,
+  .shadow-sm {
+    box-shadow: none !important;
+  }
+
+  .rounded-xl {
+    border-radius: 0 !important;
+  }
+
+  /* Show print-friendly heading */
+  h1,
+  h2 {
+    break-after: avoid;
+  }
+
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+}

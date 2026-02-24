@@ -11,7 +11,7 @@ const LocationsPage = () => {
   const [params, setParams] = useSearchParams()
   const selectedId = params.get('warehouseId') || ''
   const { data: warehousesData } = useGetWarehousesQuery({ page: 1, query: '' })
-  const [fetchLocations, { data: locationsData, refetch }] = useLazyGetLocationsByWarehouseQuery()
+  const [fetchLocations, { data: locationsData }] = useLazyGetLocationsByWarehouseQuery()
 
   const [rack, setRack] = useState('')
   const [bin, setBin] = useState('')
@@ -52,8 +52,7 @@ const LocationsPage = () => {
       toast.success('Location created')
       setRack('')
       setBin('')
-      if (refetch) refetch()
-      else fetchLocations(selectedId)
+      fetchLocations(selectedId)
     } catch (e: any) {
       toast.error(e.message || 'Error creating location')
     }
@@ -63,14 +62,14 @@ const LocationsPage = () => {
     <div className="p-4 space-y-4">
       <h1 className="text-2xl font-semibold mb-2">Locations</h1>
       <div className="grid lg:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-xl border shadow-sm p-3">
-          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Warehouses</h2>
+        <div className="bg-white rounded-xl border shadow-sm p-4">
+          <h2 className="text-sm font-semibold text-gray-700 mb-2">Warehouses</h2>
           <ul className="space-y-1 max-h-80 overflow-auto text-sm">
             {warehouses.map((w: any) => (
               <li key={w._id}>
                 <button
                   onClick={() => selectWarehouse(w._id)}
-                  className={`w-full text-left px-2 py-1 rounded ${selectedId === w._id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                  className={`w-full text-left px-2 py-1 rounded ${selectedId === w._id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'
                     }`}
                 >
                   {w.name}
@@ -81,18 +80,18 @@ const LocationsPage = () => {
           </ul>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl border shadow-sm p-3 space-y-3 lg:col-span-2">
-          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Rack / Bin Locations</h2>
+        <div className="bg-white rounded-xl border shadow-sm p-3 space-y-3 lg:col-span-2">
+          <h2 className="text-sm font-semibold text-gray-700 mb-1">Rack / Bin Locations</h2>
           {selectedId ? (
             <>
               {canManageLocations && (
                 <div className="flex flex-wrap gap-2 text-xs">
                   <div className="flex-1 min-w-[140px]">
-                    <label className="block mb-1 text-gray-500 dark:text-gray-400">Rack</label>
+                    <label className="block mb-1 text-gray-500">Rack</label>
                     <InputText value={rack} onChange={(e) => setRack(e.target.value)} className="w-full text-sm" />
                   </div>
                   <div className="flex-1 min-w-[140px]">
-                    <label className="block mb-1 text-gray-500 dark:text-gray-400">Bin</label>
+                    <label className="block mb-1 text-gray-500">Bin</label>
                     <InputText value={bin} onChange={(e) => setBin(e.target.value)} className="w-full text-sm" />
                   </div>
                   <div className="flex items-end">
@@ -103,8 +102,9 @@ const LocationsPage = () => {
 
               <div className="max-h-72 overflow-auto mt-3">
                 <table className="w-full text-xs">
-                  <thead className="bg-gray-50 dark:bg-gray-900">
+                  <thead className="bg-gray-50">
                     <tr>
+                      <th className="text-left p-2">ID</th>
                       <th className="text-left p-2">Rack</th>
                       <th className="text-left p-2">Bin</th>
                       <th className="text-left p-2">Active</th>
@@ -113,7 +113,8 @@ const LocationsPage = () => {
                   <tbody>
                     {locationsData?.locations?.length ? (
                       locationsData.locations.map((loc: any) => (
-                        <tr key={loc._id} className="border-t border-gray-100 dark:border-gray-700">
+                        <tr key={loc._id} className="border-t border-gray-100">
+                          <td className="p-2 font-mono text-[10px] text-gray-400 cursor-pointer" title={loc._id} onClick={() => { navigator.clipboard.writeText(loc._id); toast.success('ID copied!') }}>…{loc._id.slice(-6)}</td>
                           <td className="p-2">{loc.rack}</td>
                           <td className="p-2">{loc.bin}</td>
                           <td className="p-2 text-xs">{loc.isActive ? 'Yes' : 'No'}</td>
@@ -121,7 +122,7 @@ const LocationsPage = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={3} className="p-2 text-xs text-gray-400">
+                        <td colSpan={4} className="p-2 text-xs text-gray-400">
                           No locations yet for this warehouse.
                         </td>
                       </tr>

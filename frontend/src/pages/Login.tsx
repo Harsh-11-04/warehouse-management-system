@@ -62,20 +62,20 @@ const Login = () => {
 
     <>
 
-      <div className='min-h-screen flex items-center justify-center w-full bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100'>
+      <div className='min-h-screen flex items-center justify-center w-full bg-gray-100 text-gray-900'>
         <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={OnSubmitHandler}>
           {({ values, setFieldValue, handleSubmit }) => (
             <>
-              <form onSubmit={handleSubmit} className="w-[96%] md:w-[70%] lg:w-1/3 shadow-md rounded-md pt-10 pb-3 px-4 bg-white dark:bg-gray-800">
+              <form onSubmit={handleSubmit} className="w-[96%] md:w-[70%] lg:w-1/3 shadow-md rounded-md pt-10 pb-3 px-4 bg-white">
                 <div className="mb-3 py-1">
                   <label htmlFor="email">Email</label>
-                  <Field id='email' name='email' className='w-full outline-none py-3 px-2 border-[.1px] border-zinc-400 rounded-lg bg-white dark:bg-gray-700' placeholder='Enter Email Address' />
+                  <Field id='email' name='email' className='w-full outline-none py-3 px-2 border-[.1px] border-zinc-400 rounded-lg bg-white' placeholder='Enter Email Address' />
                   <ErrorMessage component={'p'} className='text-red-500 text-sm ' name='email' />
                 </div>
                 <div className="mb-3 py-1">
                   <label htmlFor="password">Password</label>
 
-                  <Field name='password' id='password' className='w-full outline-none py-3 px-2 border-[.1px] border-zinc-400 rounded-lg bg-white dark:bg-gray-700' placeholder='*****' />
+                  <Field name='password' id='password' className='w-full outline-none py-3 px-2 border-[.1px] border-zinc-400 rounded-lg bg-white' placeholder='*****' />
                   <ErrorMessage component={'p'} className='text-red-500 text-sm ' name='password' />
 
                 </div>
@@ -89,7 +89,7 @@ const Login = () => {
                   </div>
                 )}
                 <div className="mb-3 py-1 flex items-center justify-center">
-                  <Button disabled={RECAPTCHA_SITE_KEY ? !values.token : false} loading={LoginUserResponse.isLoading} className='w-full bg-red-500 text-white py-3 px-2 flex items-center justify-center'>Submit
+                  <Button type="submit" disabled={RECAPTCHA_SITE_KEY ? !values.token : false} loading={LoginUserResponse.isLoading} className='w-full bg-red-500 text-white py-3 px-2 flex items-center justify-center'>Submit
 
                   </Button>
                 </div>

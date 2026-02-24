@@ -129,11 +129,11 @@ const ProductsPage = () => {
 
       <div className="grid lg:grid-cols-3 gap-4">
         {isAdmin && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl border shadow-sm p-4 space-y-3">
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Create Product</h2>
+          <div className="bg-white rounded-xl border shadow-sm p-4 space-y-3">
+            <h2 className="text-sm font-semibold text-gray-700 mb-1">Create Product</h2>
             <div className="grid gap-2 text-sm">
               <div>
-                <label className="block mb-1 text-xs text-gray-500 dark:text-gray-400">Name</label>
+                <label className="block mb-1 text-xs text-gray-500">Name</label>
                 <InputText
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -141,7 +141,7 @@ const ProductsPage = () => {
                 />
               </div>
               <div>
-                <label className="block mb-1 text-xs text-gray-500 dark:text-gray-400">SKU</label>
+                <label className="block mb-1 text-xs text-gray-500">SKU</label>
                 <InputText
                   value={form.sku}
                   onChange={(e) => setForm({ ...form, sku: e.target.value })}
@@ -149,7 +149,7 @@ const ProductsPage = () => {
                 />
               </div>
               <div>
-                <label className="block mb-1 text-xs text-gray-500 dark:text-gray-400">Category</label>
+                <label className="block mb-1 text-xs text-gray-500">Category</label>
                 <InputText
                   value={form.category}
                   onChange={(e) => setForm({ ...form, category: e.target.value })}
@@ -158,7 +158,7 @@ const ProductsPage = () => {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block mb-1 text-xs text-gray-500 dark:text-gray-400">Price</label>
+                  <label className="block mb-1 text-xs text-gray-500">Price</label>
                   <InputText
                     value={form.price}
                     onChange={(e) => setForm({ ...form, price: e.target.value })}
@@ -168,7 +168,7 @@ const ProductsPage = () => {
                   />
                 </div>
                 <div>
-                  <label className="block mb-1 text-xs text-gray-500 dark:text-gray-400">
+                  <label className="block mb-1 text-xs text-gray-500">
                     Reorder Threshold
                   </label>
                   <InputText
@@ -191,8 +191,8 @@ const ProductsPage = () => {
           </div>
         )}
 
-        <div className={`bg-white dark:bg-gray-800 rounded-xl border shadow-sm p-4 ${isAdmin ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
-          <div className="flex items-center justify-between mb-2 text-xs text-gray-500 dark:text-gray-400">
+        <div className={`bg-white rounded-xl border shadow-sm p-4 ${isAdmin ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
+          <div className="flex items-center justify-between mb-2 text-xs text-gray-500">
             <span>
               Page {page} • {products.length} items
             </span>
@@ -221,8 +221,9 @@ const ProductsPage = () => {
           </div>
           <div className="overflow-auto max-h-[420px]">
             <table className="w-full text-xs">
-              <thead className="bg-gray-50 dark:bg-gray-900">
+              <thead className="bg-gray-50">
                 <tr>
+                  <th className="text-left p-2">ID</th>
                   <th className="text-left p-2">Name</th>
                   <th className="text-left p-2">SKU</th>
                   <th className="text-left p-2">Category</th>
@@ -236,7 +237,17 @@ const ProductsPage = () => {
               <tbody>
                 {products.length ? (
                   products.map((p: any) => (
-                    <tr key={p._id} className="border-t border-gray-100 dark:border-gray-700">
+                    <tr key={p._id} className="border-t border-gray-100">
+                      <td
+                        className="p-2 font-mono text-[10px] text-gray-400 cursor-pointer hover:text-gray-600 transition-colors"
+                        title={`Copy Full ID: ${p._id}`}
+                        onClick={() => {
+                          navigator.clipboard.writeText(p._id);
+                          toast.success('Product ID copied!');
+                        }}
+                      >
+                        …{p._id.slice(-6)}
+                      </td>
                       <td className="p-2">{p.name}</td>
                       <td className="p-2">{p.sku}</td>
                       <td className="p-2">{p.category}</td>
@@ -268,7 +279,7 @@ const ProductsPage = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={8} className="p-3 text-xs text-gray-400">
+                    <td colSpan={9} className="p-3 text-xs text-gray-400">
                       No products found.
                     </td>
                   </tr>

@@ -11,6 +11,7 @@ import { StockLocationApi } from "./queries/StockLocation.query";
 import { ShipmentApi } from "./queries/Shipment.query";
 import { ReportApi } from "./queries/Report.query";
 import { ActivityLogApi } from "./queries/ActivityLog.query";
+import { ReorderSuggestionApi } from "./queries/ReorderSuggestion.query";
 
 export const store = configureStore({
     reducer: {
@@ -24,7 +25,8 @@ export const store = configureStore({
         [StockLocationApi.reducerPath]: StockLocationApi.reducer,
         [ShipmentApi.reducerPath]: ShipmentApi.reducer,
         [ReportApi.reducerPath]: ReportApi.reducer,
-        [ActivityLogApi.reducerPath]: ActivityLogApi.reducer
+        [ActivityLogApi.reducerPath]: ActivityLogApi.reducer,
+        [ReorderSuggestionApi.reducerPath]: ReorderSuggestionApi.reducer
     },
 
     middleware: (d) => d().concat(
@@ -36,7 +38,8 @@ export const store = configureStore({
         StockLocationApi.middleware,
         ShipmentApi.middleware,
         ReportApi.middleware,
-        ActivityLogApi.middleware
+        ActivityLogApi.middleware,
+        ReorderSuggestionApi.middleware
     )
 })
 

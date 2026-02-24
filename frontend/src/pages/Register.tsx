@@ -103,7 +103,7 @@ const Register = () => {
                 </div>
               )}
               <div className="mb-3 py-1">
-                <Button disabled={RECAPTCHA_SITE_KEY ? !values.token : false} loading={registerUserResponse.isLoading} raised type='submit' className='w-full bg-red-500 text-white py-3 px-2 flex items-center justify-center'>Submit
+                <Button type="submit" disabled={RECAPTCHA_SITE_KEY ? !values.token : false} loading={registerUserResponse.isLoading} raised className='w-full bg-red-500 text-white py-3 px-2 flex items-center justify-center'>Submit
 
                 </Button>
               </div>

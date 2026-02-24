@@ -1,15 +1,28 @@
 import BasicChart from "./components/Basic"
 import PieChartDemo from "./components/Pie"
 import { useGetDashboardStatsQuery } from '../../provider/queries/Report.query'
+import { useDashboardDataQuery } from '../../provider/queries/Users.query'
 import { useNavigate } from 'react-router-dom'
 
 const HomePage = () => {
-    const { data: stats, isLoading } = useGetDashboardStatsQuery()
+    const { data: stats, isLoading: isStatsLoading } = useGetDashboardStatsQuery()
+    const { data: salesData, isLoading: isSalesLoading } = useDashboardDataQuery({})
     const navigate = useNavigate()
+
+    const isLoading = isStatsLoading || isSalesLoading
 
     const formatCurrency = (val: number) => `₹${(val || 0).toLocaleString('en-IN')}`
 
     const statCards = [
+        {
+            label: 'Total Sales',
+            value: formatCurrency(salesData?.sell),
+            icon: 'pi pi-chart-line',
+            color: 'from-emerald-500 to-emerald-600',
+            bgLight: 'bg-emerald-50',
+            textColor: 'text-emerald-700',
+            onClick: () => navigate('/reports')
+        },
         {
             label: 'Total Products',
             value: stats?.totalProducts || 0,
@@ -18,15 +31,6 @@ const HomePage = () => {
             bgLight: 'bg-blue-50',
             textColor: 'text-blue-700',
             onClick: () => navigate('/products')
-        },
-        {
-            label: 'Total Units in Stock',
-            value: (stats?.totalUnits || 0).toLocaleString(),
-            icon: 'pi pi-database',
-            color: 'from-green-500 to-green-600',
-            bgLight: 'bg-green-50',
-            textColor: 'text-green-700',
-            onClick: () => navigate('/warehouse-stock')
         },
         {
             label: 'Inventory Value',
@@ -64,7 +68,11 @@ const HomePage = () => {
             textColor: 'text-red-700',
             onClick: () => navigate('/shipments')
         },
-        ...(stats?.pendingReorderCount ? [{
+    ]
+
+    // Separate row for extra cards if needed, or just let it grid
+    if (stats?.pendingReorderCount) {
+        statCards.push({
             label: 'Reorder Suggestions',
             value: stats.pendingReorderCount,
             icon: 'pi pi-shopping-cart',
@@ -72,8 +80,8 @@ const HomePage = () => {
             bgLight: 'bg-amber-50',
             textColor: 'text-amber-700',
             onClick: () => navigate('/reorder-suggestions')
-        }] : [])
-    ]
+        })
+    }
 
     return (
         <div className="p-4">
@@ -235,11 +243,13 @@ const HomePage = () => {
                 </div>
             </div>
 
-            {/* Existing Charts */}
-            <h3 className="text-lg font-semibold text-gray-700 mb-3">IMS Analytics</h3>
-            <div className="w-full flex flex-wrap">
-                <BasicChart />
-                <PieChartDemo />
+            {/* Dashboard Analytics Section */}
+            <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-700 mb-4 px-1">Performance Analytics</h3>
+                <div className="flex flex-wrap -mx-2">
+                    <BasicChart />
+                    <PieChartDemo />
+                </div>
             </div>
         </div>
     )

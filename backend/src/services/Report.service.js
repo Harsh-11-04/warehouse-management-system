@@ -281,6 +281,124 @@ class ReportService {
             warehouseUtilization: utilization
         }
     }
+
+    static async exportToCSV(data, filename) {
+        const csv = this.convertToCSV(data)
+        return {
+            filename,
+            data: csv,
+            mimeType: 'text/csv'
+        }
+    }
+
+    static convertToCSV(data) {
+        if (!data || data.length === 0) return ''
+
+        const headers = Object.keys(data[0])
+        const csvHeaders = headers.join(',')
+
+        const csvRows = data.map(row => {
+            return headers.map(header => {
+                const value = row[header]
+                return typeof value === 'string' && value.includes(',') 
+                    ? `"${value}"` 
+                    : value
+            }).join(',')
+        })
+
+        return [csvHeaders, ...csvRows].join('\n')
+    }
+
+    static async getWarehouseStockReportCSV(user, warehouseId = null) {
+        const data = await this.getWarehouseWiseStock(user)
+        const csvData = []
+        
+        data.warehouses.forEach(warehouse => {
+            csvData.push({
+                Warehouse: warehouse.warehouseName,
+                Product: 'N/A',
+                SKU: 'N/A',
+                Quantity: warehouse.totalQuantity,
+                Value: warehouse.totalValue,
+                Location: 'All Locations'
+            })
+        })
+
+        return this.exportToCSV(csvData, `warehouse_stock_${new Date().toISOString().split('T')[0]}.csv`)
+    }
+
+    static async getLowStockReportCSV(user) {
+        const { products } = await this.getLowStockProducts(user)
+        
+        const csvData = products.map(product => ({
+            Name: product.name,
+            SKU: product.sku,
+            Category: product.category,
+            Current_Quantity: product.totalQuantity,
+            Reorder_Threshold: product.reorderThreshold,
+            Shortage: product.reorderThreshold - product.totalQuantity,
+            Price: product.price,
+            Value: product.totalQuantity * product.price
+        }))
+
+        return this.exportToCSV(csvData, `low_stock_${new Date().toISOString().split('T')[0]}.csv`)
+    }
+
+    static async getProductMovementCSV(user, productId = null, days = 30) {
+        const productIds = productId ? [productId] : await ProductModel.find({ user }).distinct('_id')
+        const dateFrom = new Date()
+        dateFrom.setDate(dateFrom.getDate() - days)
+
+        const movements = await StockHistoryModel.aggregate([
+            {
+                $match: {
+                    user,
+                    product: { $in: productIds },
+                    createdAt: { $gte: dateFrom }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: 'product',
+                    foreignField: '_id',
+                    as: 'productInfo'
+                }
+            },
+            { $unwind: '$productInfo' },
+            {
+                $lookup: {
+                    from: 'storagelocations',
+                    localField: 'fromLocation',
+                    foreignField: '_id',
+                    as: 'fromLocationInfo'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'storagelocations',
+                    localField: 'toLocation',
+                    foreignField: '_id',
+                    as: 'toLocationInfo'
+                }
+            },
+            {
+                $project: {
+                    Date: { $dateToString: { format: '%Y-%m-%d %H:%M', date: '$createdAt' } },
+                    Product_Name: '$productInfo.name',
+                    SKU: '$productInfo.sku',
+                    Action: '$action',
+                    Quantity: '$quantity',
+                    From_Location: { $arrayElemAt: ['$fromLocationInfo.rack', 0] },
+                    To_Location: { $arrayElemAt: ['$toLocationInfo.rack', 0] },
+                    Reference: '$reference'
+                }
+            },
+            { $sort: { 'Date': -1 } }
+        ])
+
+        return this.exportToCSV(movements, `product_movements_${new Date().toISOString().split('T')[0]}.csv`)
+    }
 }
 
 module.exports = ReportService

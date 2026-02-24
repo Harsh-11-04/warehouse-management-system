@@ -19,7 +19,7 @@ const reorderSuggestionSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["Pending", "Ordered", "Ignored"],
+            enum: ["Pending", "Ordered", "Ignored", "Resolved"],
             default: "Pending",
         },
         draftPurchaseOrder: {

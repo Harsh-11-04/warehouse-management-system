@@ -18,11 +18,8 @@ const Authentication = async (req, res, next) => {
         }
 
         const data = validateToken(auth_token)
-        req.user = data.userid
-
-        // Fetch user role for authorization middleware
-        const user = await UserModel.findById(data.userid).select('role')
-        req.userRole = user ? user.role : 'admin'
+        req.user = data.userId
+        req.userRole = data.role || 'admin'
 
         next()
 

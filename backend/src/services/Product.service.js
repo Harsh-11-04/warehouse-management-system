@@ -6,20 +6,34 @@ const ReorderSuggestionService = require("./ReorderSuggestion.service")
 
 class ProductService {
 
-    static async syncTotalQuantity(productId) {
+    static async syncTotalQuantity(productId, session = null) {
         const result = await StockLocationModel.aggregate([
             { $match: { product: productId } },
             { $group: { _id: "$product", total: { $sum: "$quantity" } } }
-        ])
+        ], { session })
         const totalQuantity = result.length > 0 ? result[0].total : 0
-        const product = await ProductModel.findByIdAndUpdate(productId, { totalQuantity }, { new: true })
+        const product = await ProductModel.findByIdAndUpdate(productId, { totalQuantity }, { new: true, session })
 
-        // Check for reorder suggestion
-        if (product && product.totalQuantity <= product.reorderThreshold) {
-            await ReorderSuggestionService.createSuggestion(product.user, productId)
+        if (product) {
+            await this.processReorderCheck(product, session)
         }
 
         return totalQuantity
+    }
+
+    /**
+     * Centralized reorder check logic.
+     * Either creates a suggestion (if below threshold) or resolves existing ones (if above).
+     */
+    static async processReorderCheck(product, session = null) {
+        if (!product) return;
+
+        if (product.totalQuantity <= product.reorderThreshold) {
+            await ReorderSuggestionService.createSuggestion(product.user, product._id, session)
+        } else {
+            // Automatically resolve pending suggestions if stock is now sufficient
+            await ReorderSuggestionService.resolveAllPendingForProduct(product._id, session)
+        }
     }
 
     static async createProduct(user, body) {
@@ -80,7 +94,7 @@ class ProductService {
     static async updateProduct(user, body, id) {
         const { name, sku, category, price, reorderThreshold } = body
 
-        const product = await ProductModel.findOne({ _id: id, user })
+        let product = await ProductModel.findOne({ _id: id, user })
         if (!product) {
             throw new ApiError(httpStatus.NOT_FOUND, "Product Not Found")
         }
@@ -92,7 +106,10 @@ class ProductService {
             }
         }
 
-        await ProductModel.findByIdAndUpdate(id, { name, sku, category, price, reorderThreshold })
+        product = await ProductModel.findByIdAndUpdate(id, { name, sku, category, price, reorderThreshold }, { new: true })
+        if (product) {
+            await this.processReorderCheck(product)
+        }
 
         return { msg: "Product Updated Successfully" }
     }
@@ -105,6 +122,9 @@ class ProductService {
 
         // Soft-delete: set status to 'Inactive' to preserve audit trails
         await ProductModel.findByIdAndUpdate(id, { status: 'Inactive' })
+
+        // Resolve suggestions for inactive products
+        await ReorderSuggestionService.resolveAllPendingForProduct(id)
 
         await ActivityLogService.log(user, 'Deactivated Product', 'Product', id, `Product "${product.name}" deactivated`)
 

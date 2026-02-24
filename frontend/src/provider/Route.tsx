@@ -16,6 +16,7 @@ import PickingPage from "../pages/Picking";
 import ShipmentsPage from "../pages/Shipments";
 import ReportsPage from "../pages/Reports";
 import ActivityLogPage from "../pages/ActivityLogs";
+import ReorderSuggestionPage from "../pages/ReorderSuggestion";
 import { useSelector } from "react-redux";
 import { UserSlicePath } from "./slice/user.slice";
 import { Navigate } from "react-router-dom";
@@ -46,7 +47,7 @@ export const Routes = createBrowserRouter([
             },
             {
                 path: '/user',
-                Component: UserPage
+                element: <RoleGuard allowedRoles={['admin', 'manager']}><UserPage /></RoleGuard>
             },
             {
                 path: '/orders',
@@ -87,6 +88,10 @@ export const Routes = createBrowserRouter([
             {
                 path: '/activity-logs',
                 element: <RoleGuard allowedRoles={['admin', 'manager']}><ActivityLogPage /></RoleGuard>
+            },
+            {
+                path: '/reorder-suggestions',
+                element: <RoleGuard allowedRoles={['admin', 'manager']}><ReorderSuggestionPage /></RoleGuard>
             },
             {
                 path: '*',

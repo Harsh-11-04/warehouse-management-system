@@ -19,6 +19,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const user = useSelector(UserSlicePath) as { role?: string } | null
   const role = user?.role || 'warehouse_staff'
   const canViewReports = ['admin', 'manager'].includes(role)
+  const canManage = ['admin', 'manager'].includes(role)
   const dispatch = useDispatch()
 
 
@@ -35,15 +36,17 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
 
             <MenuItem component={<Link to="/orders" />} icon={<FiBox className="text-2xl" />}> Orders </MenuItem>
 
-            <MenuItem component={<Link to="/user" />} icon={<FiUser className="text-2xl" />} > Users </MenuItem>
+            {canManage && <MenuItem component={<Link to="/user" />} icon={<FiUser className="text-2xl" />} > Users </MenuItem>}
 
             <SubMenu label="Warehouse" icon={<LuWarehouse className="text-2xl" />}>
               <MenuItem component={<Link to="/products" />} icon={<BsBoxes className="text-xl" />}> Products </MenuItem>
-              <MenuItem component={<Link to="/warehouses" />} icon={<LuWarehouse className="text-xl" />}> Warehouses </MenuItem>
+              {canManage && <MenuItem component={<Link to="/warehouses" />} icon={<LuWarehouse className="text-xl" />}> Warehouses </MenuItem>}
+              {canManage && <MenuItem component={<Link to="/locations" />} icon={<TbMapPin className="text-xl" />}> Locations </MenuItem>}
               <MenuItem component={<Link to="/stock-assign" />} icon={<MdOutlineAssignment className="text-xl" />}> Assign / Receive </MenuItem>
               <MenuItem component={<Link to="/warehouse-stock" />} icon={<TbMapPin className="text-xl" />}> Stock View </MenuItem>
               <MenuItem component={<Link to="/picking" />} icon={<BiTransfer className="text-xl" />}> Pick / Transfer </MenuItem>
               <MenuItem component={<Link to="/shipments" />} icon={<TbTruckDelivery className="text-xl" />}> Shipments </MenuItem>
+              <MenuItem component={<Link to="/reorder-suggestions" />} icon={<TbReportAnalytics className="text-xl" />}> Reorder Suggestions </MenuItem>
             </SubMenu>
 
             {canViewReports && (
@@ -54,7 +57,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
             )}
           </Menu>
         </Sidebar>
-        <div className="w-full">
+        <div className="w-full min-w-0 overflow-x-hidden">
           {children}
         </div>
 

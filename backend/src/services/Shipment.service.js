@@ -56,9 +56,12 @@ class ShipmentService {
         // When shipment is delivered, auto-update product quantity and log stock history
         if (newStatus === 'Delivered') {
             if (shipment.type === 'Inbound') {
-                await ProductModel.findByIdAndUpdate(shipment.product, {
+                const product = await ProductModel.findByIdAndUpdate(shipment.product, {
                     $inc: { totalQuantity: shipment.quantity }
-                })
+                }, { new: true })
+                if (product) {
+                    await ProductService.processReorderCheck(product)
+                }
                 await StockHistoryService.log({
                     productId: shipment.product,
                     quantity: shipment.quantity,
@@ -72,9 +75,12 @@ class ShipmentService {
                 if (product.totalQuantity < shipment.quantity) {
                     throw new ApiError(httpStatus.BAD_REQUEST, `Insufficient stock to fulfill outbound shipment. Available: ${product.totalQuantity}`)
                 }
-                await ProductModel.findByIdAndUpdate(shipment.product, {
+                const updatedProduct = await ProductModel.findByIdAndUpdate(shipment.product, {
                     $inc: { totalQuantity: -shipment.quantity }
-                })
+                }, { new: true })
+                if (updatedProduct) {
+                    await ProductService.processReorderCheck(updatedProduct)
+                }
                 await StockHistoryService.log({
                     productId: shipment.product,
                     quantity: shipment.quantity,
