@@ -103,54 +103,137 @@ const HomePage = () => {
                 )}
             </div>
 
-            {/* Recent Shipments Table */}
-            {stats?.recentShipments?.length > 0 && (
-                <div className="mb-6">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-3">Recent Shipments</h3>
-                    <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-                        <table className="w-full text-sm">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="text-left p-3 font-medium text-gray-600">Type</th>
-                                    <th className="text-left p-3 font-medium text-gray-600">Product</th>
-                                    <th className="text-left p-3 font-medium text-gray-600">Qty</th>
-                                    <th className="text-left p-3 font-medium text-gray-600">Status</th>
-                                    <th className="text-left p-3 font-medium text-gray-600">Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {stats.recentShipments.map((s: any, i: number) => (
-                                    <tr key={i} className="border-t hover:bg-gray-50">
-                                        <td className="p-3">
-                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${s.type === 'Inbound'
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'bg-orange-100 text-orange-700'
-                                                }`}>
-                                                <i className={`pi ${s.type === 'Inbound' ? 'pi-download' : 'pi-upload'} text-[10px]`} />
-                                                {s.type}
-                                            </span>
-                                        </td>
-                                        <td className="p-3 font-medium">{s.product?.name || 'N/A'}</td>
-                                        <td className="p-3">{s.quantity}</td>
-                                        <td className="p-3">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${s.status === 'Delivered' ? 'bg-green-100 text-green-700'
-                                                : s.status === 'In Transit' ? 'bg-blue-100 text-blue-700'
-                                                    : s.status === 'Cancelled' ? 'bg-red-100 text-red-700'
-                                                        : 'bg-yellow-100 text-yellow-700'
-                                                }`}>
-                                                {s.status}
-                                            </span>
-                                        </td>
-                                        <td className="p-3 text-gray-500">
-                                            {new Date(s.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                                        </td>
+            {/* Recent Shipments & Daily In/Out */}
+            <div className="grid lg:grid-cols-3 gap-6 mb-6">
+                {stats?.recentShipments?.length > 0 && (
+                    <div className="lg:col-span-2">
+                        <h3 className="text-lg font-semibold text-gray-700 mb-3">Recent Shipments</h3>
+                        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+                            <table className="w-full text-sm">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="text-left p-3 font-medium text-gray-600">Type</th>
+                                        <th className="text-left p-3 font-medium text-gray-600">Product</th>
+                                        <th className="text-left p-3 font-medium text-gray-600">Qty</th>
+                                        <th className="text-left p-3 font-medium text-gray-600">Status</th>
+                                        <th className="text-left p-3 font-medium text-gray-600">Date</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {stats.recentShipments.map((s: any, i: number) => (
+                                        <tr key={i} className="border-t hover:bg-gray-50">
+                                            <td className="p-3">
+                                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${s.type === 'Inbound'
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : 'bg-orange-100 text-orange-700'
+                                                    }`}>
+                                                    <i className={`pi ${s.type === 'Inbound' ? 'pi-download' : 'pi-upload'} text-[10px]`} />
+                                                    {s.type}
+                                                </span>
+                                            </td>
+                                            <td className="p-3 font-medium">{s.product?.name || 'N/A'}</td>
+                                            <td className="p-3">{s.quantity}</td>
+                                            <td className="p-3">
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${s.status === 'Delivered' ? 'bg-green-100 text-green-700'
+                                                    : s.status === 'In Transit' ? 'bg-blue-100 text-blue-700'
+                                                        : s.status === 'Cancelled' ? 'bg-red-100 text-red-700'
+                                                            : 'bg-yellow-100 text-yellow-700'
+                                                    }`}>
+                                                    {s.status}
+                                                </span>
+                                            </td>
+                                            <td className="p-3 text-gray-500">
+                                                {new Date(s.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
+                )}
+
+                {/* Daily inbound / outbound summary */}
+                {stats?.dailyInboundOutbound?.length > 0 && (
+                    <div>
+                        <h3 className="text-lg font-semibold text-gray-700 mb-3">Daily Inbound / Outbound (7 days)</h3>
+                        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+                            <table className="w-full text-xs">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="text-left p-2 font-medium text-gray-600">Date</th>
+                                        <th className="text-left p-2 font-medium text-gray-600">Inbound Qty</th>
+                                        <th className="text-left p-2 font-medium text-gray-600">Outbound Qty</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {Array.from(
+                                        new Map(
+                                            (stats.dailyInboundOutbound || []).map((d: any) => [d._id.date, d])
+                                        ).keys()
+                                    ).map((dateKey: any) => {
+                                        const dayEntries = stats.dailyInboundOutbound.filter((d: any) => d._id.date === dateKey)
+                                        const inbound = dayEntries.find((d: any) => d._id.type === 'Inbound')
+                                        const outbound = dayEntries.find((d: any) => d._id.type === 'Outbound')
+                                        return (
+                                            <tr key={dateKey} className="border-t">
+                                                <td className="p-2 text-gray-700">{dateKey}</td>
+                                                <td className="p-2 text-green-700 font-medium">{inbound?.totalQty || 0}</td>
+                                                <td className="p-2 text-orange-700 font-medium">{outbound?.totalQty || 0}</td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Fast / Slow moving + Utilization */}
+            <div className="grid lg:grid-cols-3 gap-6 mb-6">
+                <div className="bg-white rounded-xl shadow-sm border p-4">
+                    <h3 className="text-md font-semibold text-gray-700 mb-2">Fast Moving Products</h3>
+                    <ul className="space-y-1 text-sm">
+                        {(stats?.fastMovingProducts || []).map((p: any) => (
+                            <li key={p._id} className="flex justify-between">
+                                <span className="font-medium text-gray-800">{p.name}</span>
+                                <span className="text-gray-500 text-xs">{p.sku}</span>
+                            </li>
+                        ))}
+                        {!stats?.fastMovingProducts?.length && <li className="text-gray-400 text-xs">No data yet</li>}
+                    </ul>
                 </div>
-            )}
+                <div className="bg-white rounded-xl shadow-sm border p-4">
+                    <h3 className="text-md font-semibold text-gray-700 mb-2">Slow Moving Products</h3>
+                    <ul className="space-y-1 text-sm">
+                        {(stats?.slowMovingProducts || []).map((p: any) => (
+                            <li key={p._id} className="flex justify-between">
+                                <span className="font-medium text-gray-800">{p.name}</span>
+                                <span className="text-gray-500 text-xs">{p.sku}</span>
+                            </li>
+                        ))}
+                        {!stats?.slowMovingProducts?.length && <li className="text-gray-400 text-xs">No data yet</li>}
+                    </ul>
+                </div>
+                <div className="bg-white rounded-xl shadow-sm border p-4">
+                    <h3 className="text-md font-semibold text-gray-700 mb-2">Warehouse Utilization</h3>
+                    <ul className="space-y-1 text-sm">
+                        {(stats?.warehouseUtilization || []).map((w: any) => (
+                            <li key={w.warehouseId} className="flex justify-between items-center">
+                                <div>
+                                    <p className="font-medium text-gray-800">{w.warehouseName}</p>
+                                    <p className="text-xs text-gray-500">Used {w.used}/{w.capacity}</p>
+                                </div>
+                                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-50 text-blue-700">
+                                    {w.percent}%
+                                </span>
+                            </li>
+                        ))}
+                        {!stats?.warehouseUtilization?.length && <li className="text-gray-400 text-xs">No data yet</li>}
+                    </ul>
+                </div>
+            </div>
 
             {/* Existing Charts */}
             <h3 className="text-lg font-semibold text-gray-700 mb-3">IMS Analytics</h3>

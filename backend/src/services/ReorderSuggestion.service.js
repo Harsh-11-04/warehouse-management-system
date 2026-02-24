@@ -1,4 +1,5 @@
 const { ReorderSuggestionModel } = require("../models");
+const ActivityLogService = require("./ActivityLog.service");
 
 class ReorderSuggestionService {
     /**
@@ -15,12 +16,20 @@ class ReorderSuggestionService {
             return existing;
         }
 
-        return await ReorderSuggestionModel.create({
+        const suggestion = await ReorderSuggestionModel.create({
             product: productId,
             user,
             suggestedQuantity,
             status: "Pending",
         });
+        await ActivityLogService.log(
+            user,
+            "Auto Reorder Suggestion",
+            "ReorderSuggestion",
+            suggestion._id,
+            `Suggested reorder of ${suggestedQuantity} units for product ${productId}`
+        );
+        return suggestion;
     }
 
     /**

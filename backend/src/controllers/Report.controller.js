@@ -24,6 +24,24 @@ class ReportController {
         const result = await ReportService.getDashboardStats(req.user)
         res.status(200).json(result)
     })
+
+    static GetWarehouseWiseStock = CatchAsync(async (req, res) => {
+        const result = await ReportService.getWarehouseWiseStock(req.user)
+        res.status(200).json(result)
+    })
+
+    static GetMonthlyInventorySummary = CatchAsync(async (req, res) => {
+        const months = parseInt(req.query.months) || 6
+        const result = await ReportService.getMonthlyInventorySummary(req.user, months)
+        res.status(200).json(result)
+    })
+
+    static GetProductMovementHistory = CatchAsync(async (req, res) => {
+        const { productId } = req.params
+        const days = parseInt(req.query.days) || 30
+        const result = await ReportService.getProductMovementHistory(req.user, productId, days)
+        res.status(200).json(result)
+    })
 }
 
 module.exports = ReportController

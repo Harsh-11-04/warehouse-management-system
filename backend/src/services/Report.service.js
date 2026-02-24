@@ -157,6 +157,30 @@ class ReportService {
         return { summary, months }
     }
 
+    // Product movement history
+    static async getProductMovementHistory(user, productId, days = 30) {
+        let userId
+        try {
+            userId = (typeof user === 'string') ? new mongoose.Types.ObjectId(user.trim()) : user
+        } catch (e) {
+            userId = user
+        }
+        const dateFrom = new Date()
+        dateFrom.setDate(dateFrom.getDate() - days)
+
+        const history = await StockHistoryModel.find({
+            user: userId,
+            product: productId,
+            createdAt: { $gte: dateFrom }
+        })
+            .populate('fromLocation', 'rack bin')
+            .populate('toLocation', 'rack bin')
+            .sort({ createdAt: -1 })
+            .lean()
+
+        return { history, days }
+    }
+
     // Dashboard overview stats with enhanced KPIs
     static async getDashboardStats(user) {
         let userId;

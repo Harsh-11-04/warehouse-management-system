@@ -22,6 +22,11 @@ const reorderSuggestionSchema = new mongoose.Schema(
             enum: ["Pending", "Ordered", "Ignored"],
             default: "Pending",
         },
+        draftPurchaseOrder: {
+            vendor: { type: String, trim: true, default: '' },
+            quantity: { type: Number, min: 1, default: null },
+            notes: { type: String, trim: true, default: '' }
+        }
     },
     { timestamps: true }
 );

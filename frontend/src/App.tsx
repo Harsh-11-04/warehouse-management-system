@@ -1,83 +1,73 @@
- 
+
 import { Outlet, useNavigate } from 'react-router-dom'
 import Header from './components/Header'
 import MainLayout from './layout/MainLayout'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useDispatch, useSelector } from 'react-redux'
-import { setTheme } from './provider/slice/Theme.slice'
 import { setUser, UserSlicePath } from './provider/slice/user.slice'
-function App() { 
+function App() {
   const [loading, SetLoading] = useState(true)
-  const navigate= useNavigate() 
-      const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
+  const selector = useSelector(UserSlicePath)
+
+
+
+  const fetchUser = async (token: string) => {
+    try {
+
+      const { data } = await axios.get(import.meta.env.VITE_BACKEND_URL + "/auth/profile", {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      })
+
+      console.log(data.user);
+      dispatch(setUser(data.user));
+
+
+      SetLoading(false)
+      return
+    } catch (error) {
+      console.log(error);
+
+      navigate("/login")
+      return
+    }
+
+  }
   useEffect(() => {
-    const t = localStorage.getItem('theme') as 'dark' | 'light' | null
-    if (t === 'dark' || t === 'light') dispatch(setTheme(t))
-  }, [dispatch])
-      const selector = useSelector(UserSlicePath)
+    const token = localStorage.getItem("token") || ''
 
+    if (!token) {
+      navigate("/login")
+      return
+    } else {
 
-  
-  const fetchUser = async(token:string) => {
-      try {
-
-        const {data} = await axios.get(import.meta.env.VITE_BACKEND_URL+"/auth/profile",{
-          headers:{
-            'Authorization': 'Bearer ' + token
-          }
-        })
-
-        console.log(data.user);
-        dispatch(setUser(data.user));
-
+      if (selector?.email) {
 
         SetLoading(false)
         return
-      } catch (error) {
-        console.log(error);
-
-        navigate("/login")
-        return
+      } else {
+        (async () => {
+          await fetchUser(token);
+        })()
       }
-
-  }
-  useEffect(() => {
-        const token = localStorage.getItem("token") || ''
-
-        if(!token){
-          navigate("/login")
-          return
-        }else{
-
-          if (selector?.email){
-
-            SetLoading(false)
-            return 
-          }else{ 
-            (async()=>{
-              await fetchUser(token);
-            })()
-          }
-        }
+    }
 
   }, [])
-
-
-  if (loading){
-      return <div>loading....</div>
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-700">loading....</div>
   }
 
   return (
-    <>
-
-        <Header />
-        <MainLayout>
-
+    <div className="min-h-screen bg-gray-50 text-gray-800">
+      <Header />
+      <MainLayout>
         <Outlet />
-        </MainLayout>
-     
-    </>
+      </MainLayout>
+    </div>
   )
 }
 

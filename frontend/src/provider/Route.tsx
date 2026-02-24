@@ -58,27 +58,27 @@ export const Routes = createBrowserRouter([
             },
             {
                 path: '/warehouses',
-                Component: WarehousePage
+                element: <RoleGuard allowedRoles={['admin', 'manager']}><WarehousePage /></RoleGuard>
             },
             {
                 path: '/locations',
-                Component: LocationsPage
+                element: <RoleGuard allowedRoles={['admin', 'manager']}><LocationsPage /></RoleGuard>
             },
             {
                 path: '/stock-assign',
-                Component: StockAssignPage
+                element: <RoleGuard allowedRoles={['admin', 'manager', 'warehouse_staff']}><StockAssignPage /></RoleGuard>
             },
             {
                 path: '/warehouse-stock',
-                Component: WarehouseStockPage
+                element: <RoleGuard allowedRoles={['admin', 'manager', 'warehouse_staff']}><WarehouseStockPage /></RoleGuard>
             },
             {
                 path: '/picking',
-                Component: PickingPage
+                element: <RoleGuard allowedRoles={['admin', 'manager', 'warehouse_staff']}><PickingPage /></RoleGuard>
             },
             {
                 path: '/shipments',
-                Component: ShipmentsPage
+                element: <RoleGuard allowedRoles={['admin', 'manager', 'warehouse_staff']}><ShipmentsPage /></RoleGuard>
             },
             {
                 path: '/reports',
