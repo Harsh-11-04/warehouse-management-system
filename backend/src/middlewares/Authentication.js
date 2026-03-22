@@ -20,6 +20,7 @@ const Authentication = async (req, res, next) => {
         const data = validateToken(auth_token)
         req.user = data.userId
         req.userRole = data.role || 'admin'
+        req.shopId = data.shopId || null
 
         next()
 

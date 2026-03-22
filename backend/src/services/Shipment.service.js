@@ -1,8 +1,9 @@
 const httpStatus = require("http-status")
-const { ShipmentModel, ProductModel } = require("../models")
+const { ShipmentModel, ProductModel, StockLocationModel, StorageLocationModel } = require("../models")
 const ApiError = require("../utils/ApiError")
 const ActivityLogService = require("./ActivityLog.service")
 const StockHistoryService = require("./StockHistory.service")
+const ProductService = require("./Product.service")
 
 class ShipmentService {
 
@@ -36,6 +37,52 @@ class ShipmentService {
         return { msg: `${type} Shipment Created Successfully`, shipment }
     }
 
+    /**
+     * Auto-assign inbound stock to the best available storage location.
+     * Priority: existing location for this product > user's first storage location.
+     */
+    static async _autoAssignInboundStock(user, productId, quantity, shipmentId) {
+        // 1. Try to find an existing stock location for this product
+        let existingStock = await StockLocationModel.findOne({ product: productId, user })
+
+        if (existingStock) {
+            existingStock.quantity += quantity
+            await existingStock.save()
+            await StockHistoryService.log({
+                productId,
+                toLocationId: existingStock.location,
+                quantity,
+                action: 'Assign',
+                userId: user,
+                reference: `Auto-assigned from Shipment #${shipmentId}`
+            })
+            return existingStock.location
+        }
+
+        // 2. No existing location — find the user's first storage location
+        const firstLocation = await StorageLocationModel.findOne({ user })
+        if (firstLocation) {
+            await StockLocationModel.create({
+                product: productId,
+                location: firstLocation._id,
+                quantity,
+                user
+            })
+            await StockHistoryService.log({
+                productId,
+                toLocationId: firstLocation._id,
+                quantity,
+                action: 'Assign',
+                userId: user,
+                reference: `Auto-assigned from Shipment #${shipmentId}`
+            })
+            return firstLocation._id
+        }
+
+        // 3. No storage locations exist — skip auto-assign
+        return null
+    }
+
     static async updateShipmentStatus(user, shipmentId, newStatus) {
         const shipment = await ShipmentModel.findOne({ _id: shipmentId, user })
         if (!shipment) {
@@ -56,9 +103,21 @@ class ShipmentService {
         // When shipment is delivered, auto-update product quantity and log stock history
         if (newStatus === 'Delivered') {
             if (shipment.type === 'Inbound') {
-                const product = await ProductModel.findByIdAndUpdate(shipment.product, {
-                    $inc: { totalQuantity: shipment.quantity }
-                }, { new: true })
+                // Auto-assign stock to a warehouse location
+                const assignedLocationId = await this._autoAssignInboundStock(user, shipment.product, shipment.quantity, shipmentId)
+
+                // Sync the product's totalQuantity from all stock locations
+                const mongoose = require('mongoose')
+                await ProductService.syncTotalQuantity(new mongoose.Types.ObjectId(shipment.product))
+
+                // If no location was found, just increment totalQuantity directly
+                if (!assignedLocationId) {
+                    await ProductModel.findByIdAndUpdate(shipment.product, {
+                        $inc: { totalQuantity: shipment.quantity }
+                    }, { new: true })
+                }
+
+                const product = await ProductModel.findById(shipment.product)
                 if (product) {
                     await ProductService.processReorderCheck(product)
                 }
@@ -68,7 +127,7 @@ class ShipmentService {
                     action: 'Shipment_Inbound',
                     userId: user,
                     reference: `Shipment #${shipmentId}`,
-                    metadata: { shipmentId }
+                    metadata: { shipmentId, autoAssignedLocation: assignedLocationId || 'none' }
                 })
             } else if (shipment.type === 'Outbound') {
                 const product = await ProductModel.findById(shipment.product)

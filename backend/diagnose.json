@@ -1,0 +1,135 @@
+{
+  "invoices": [
+    {
+      "_id": "69b4511e4d60eb001e3aed96",
+      "user": "699dfec5e5b48fb76f7188e8",
+      "invoiceNumber": "INV-0005",
+      "customer": "69b4511e4d60eb001e3aed94",
+      "customerName": "Walk-in",
+      "customerPhone": "8149761122",
+      "items": [
+        {
+          "product": "69b4499ccac8f08765a9617c",
+          "name": "vim",
+          "barcode": "",
+          "quantity": 5,
+          "price": 130,
+          "gstPercent": 0,
+          "gstAmount": 0,
+          "lineTotal": 650
+        }
+      ],
+      "subtotal": 650,
+      "totalGst": 0,
+      "grandTotal": 650,
+      "paymentMode": "Cash",
+      "paymentStatus": "Paid",
+      "billedBy": "",
+      "createdAt": "2026-03-13T18:02:06.488Z",
+      "updatedAt": "2026-03-13T18:02:14.037Z",
+      "__v": 0
+    },
+    {
+      "_id": "69b450b04d60eb001e3aed80",
+      "user": "699dfec5e5b48fb76f7188e8",
+      "invoiceNumber": "INV-0004",
+      "customer": "69b450b04d60eb001e3aed7e",
+      "customerName": "Walk-in",
+      "customerPhone": "8923596151",
+      "items": [
+        {
+          "product": "69b4499ccac8f08765a9617c",
+          "name": "vim",
+          "barcode": "",
+          "quantity": 4,
+          "price": 130,
+          "gstPercent": 0,
+          "gstAmount": 0,
+          "lineTotal": 520
+        }
+      ],
+      "subtotal": 520,
+      "totalGst": 0,
+      "grandTotal": 520,
+      "paymentMode": "Cash",
+      "paymentStatus": "Paid",
+      "billedBy": "",
+      "createdAt": "2026-03-13T18:00:16.473Z",
+      "updatedAt": "2026-03-13T18:00:16.473Z",
+      "__v": 0
+    },
+    {
+      "_id": "69b44fd14d60eb001e3aed5c",
+      "user": "699dfec5e5b48fb76f7188e8",
+      "invoiceNumber": "INV-0003",
+      "customer": "69b44fd14d60eb001e3aed5a",
+      "customerName": "Walk-in",
+      "customerPhone": "8923576152",
+      "items": [
+        {
+          "product": "69b4499ccac8f08765a9617c",
+          "name": "vim",
+          "barcode": "",
+          "quantity": 2,
+          "price": 130,
+          "gstPercent": 0,
+          "gstAmount": 0,
+          "lineTotal": 260
+        }
+      ],
+      "subtotal": 260,
+      "totalGst": 0,
+      "grandTotal": 260,
+      "paymentMode": "Cash",
+      "paymentStatus": "Paid",
+      "billedBy": "",
+      "createdAt": "2026-03-13T17:56:33.576Z",
+      "updatedAt": "2026-03-13T17:56:33.576Z",
+      "__v": 0
+    }
+  ],
+  "customers": [
+    {
+      "_id": "69b4511e4d60eb001e3aed94",
+      "user": "699dfec5e5b48fb76f7188e8",
+      "name": "Walk-in",
+      "phone": "8149761122",
+      "email": "",
+      "address": "",
+      "gstNumber": "",
+      "hasCard": false,
+      "isActive": true,
+      "createdAt": "2026-03-13T18:02:06.484Z",
+      "updatedAt": "2026-03-13T18:02:06.484Z",
+      "__v": 0
+    },
+    {
+      "_id": "69b450b04d60eb001e3aed7e",
+      "user": "699dfec5e5b48fb76f7188e8",
+      "name": "Walk-in",
+      "phone": "8923596151",
+      "email": "",
+      "address": "",
+      "gstNumber": "",
+      "hasCard": false,
+      "isActive": true,
+      "createdAt": "2026-03-13T18:00:16.469Z",
+      "updatedAt": "2026-03-13T18:00:16.469Z",
+      "__v": 0
+    },
+    {
+      "_id": "69b44fd14d60eb001e3aed5a",
+      "user": "699dfec5e5b48fb76f7188e8",
+      "name": "Walk-in",
+      "phone": "8923576152",
+      "email": "",
+      "address": "",
+      "gstNumber": "",
+      "hasCard": false,
+      "isActive": true,
+      "createdAt": "2026-03-13T17:56:33.569Z",
+      "updatedAt": "2026-03-13T17:56:33.569Z",
+      "__v": 0
+    }
+  ]
+}

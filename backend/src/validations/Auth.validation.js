@@ -6,7 +6,8 @@ class AuthValidation {
             body("token").notEmpty().withMessage("token is Required"),
             body("name").notEmpty().withMessage("name can not be empty"),
             body("email").isEmail().withMessage("email must be valid").notEmpty().withMessage("name can not be empty"),
-            body("password").isLength({min:6}).withMessage("password include mininum 6 characters").notEmpty().withMessage("password is required")
+            body("password").isLength({min:6}).withMessage("password include mininum 6 characters").notEmpty().withMessage("password is required"),
+            body("shopCode").optional({ checkFalsy: true }).isString().withMessage("shopCode must be valid")
     ]
  static LoginUser = [ 
             body("token").notEmpty().withMessage("token is Required"),

@@ -21,14 +21,16 @@ const Register = () => {
     token: string;
     name: string,
     email: string,
-    password: string
+    password: string,
+    shopCode: string
   }
 
   const initialValues: User = {
     name: '',
     token: RECAPTCHA_SITE_KEY ? '' : 'test_token_bypass',
     email: '',
-    password: ''
+    password: '',
+    shopCode: ''
   }
 
   const validationSchema = yup.object({
@@ -92,6 +94,18 @@ const Register = () => {
                 <Field name='password' id='password' className='w-full outline-none py-3 px-2 border-[.1px] border-zinc-400 rounded-lg' placeholder='*****' />
                 <ErrorMessage component={'p'} className='text-red-500 text-sm ' name='password' />
 
+              </div>
+              <div className="mb-3 py-1">
+                <label htmlFor="shopCode">Shop Code <span className="text-gray-400 text-xs">(optional)</span></label>
+                <Field
+                  id='shopCode'
+                  name='shopCode'
+                  className='w-full outline-none py-3 px-2 border-[.1px] border-zinc-400 rounded-lg'
+                  placeholder='Enter an existing shop code to join the same shop'
+                />
+                <p className='text-xs text-gray-500 mt-1'>
+                  Leave this blank to create a new shop for this account.
+                </p>
               </div>
               {RECAPTCHA_SITE_KEY && (
                 <div className="mb-3 py-1">

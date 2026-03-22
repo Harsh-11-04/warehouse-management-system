@@ -14,7 +14,7 @@ const Schema = new mongoose.Schema({
     entity: {
         type: String,
         required: [true, "Entity type is required"],
-        enum: ['Product', 'Warehouse', 'StorageLocation', 'StockLocation', 'Shipment', 'User']
+        enum: ['Product', 'Warehouse', 'StorageLocation', 'StockLocation', 'Shipment', 'User', 'BillingProduct', 'BillingCustomer', 'BillingInvoice']
     },
     entityId: {
         type: mongoose.Schema.Types.ObjectId

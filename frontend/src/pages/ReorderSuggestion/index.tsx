@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { Dropdown } from 'primereact/dropdown'
 import { Button } from 'primereact/button'
 import { useGetReorderSuggestionsQuery, useUpdateSuggestionStatusMutation } from '../../provider/queries/ReorderSuggestion.query'
+import { useCreateDraftPurchaseOrderMutation } from '../../provider/queries/PurchaseOrder.query'
 import { toast } from 'sonner'
+import { useNavigate } from 'react-router-dom'
 
 const statusOptions = [
     { label: 'All Statuses', value: '' },
@@ -19,8 +21,24 @@ const statusColors: Record<string, string> = {
 
 const ReorderSuggestionPage = () => {
     const [statusFilter, setStatusFilter] = useState('')
+    const navigate = useNavigate()
     const { data, isLoading, isError } = useGetReorderSuggestionsQuery()
     const [updateStatus, { isLoading: updating }] = useUpdateSuggestionStatusMutation()
+    const [createPO, { isLoading: creatingPO }] = useCreateDraftPurchaseOrderMutation()
+
+    const onCreatePO = async (suggestionId: string) => {
+        try {
+            const res: any = await createPO({ reorderSuggestionId: suggestionId })
+            if (res.error) {
+                toast.error(res.error?.data?.message || 'Failed to create PO')
+            } else {
+                toast.success('Purchase Order created! Redirecting…')
+                setTimeout(() => navigate('/purchase-orders'), 1000)
+            }
+        } catch (e: any) {
+            toast.error(e.message || 'Error occurred')
+        }
+    }
 
     const suggestions = data || []
     const filteredSuggestions = statusFilter
@@ -103,6 +121,16 @@ const ReorderSuggestionPage = () => {
                                         <td className="p-3 text-right">
                                             {s.status === 'Pending' && (
                                                 <div className="flex justify-end gap-1">
+                                                    <Button
+                                                        icon="pi pi-shopping-cart"
+                                                        size="small"
+                                                        severity="info"
+                                                        text
+                                                        rounded
+                                                        onClick={() => onCreatePO(s._id)}
+                                                        tooltip="Create Purchase Order"
+                                                        loading={creatingPO}
+                                                    />
                                                     <Button
                                                         icon="pi pi-check"
                                                         size="small"

@@ -48,7 +48,12 @@ const Login = () => {
 
 
       resetForm()
-      navigate("/")
+      
+      if (data.user?.role === 'warehouse_staff') {
+        navigate("/billing/new-invoice")
+      } else {
+        navigate("/")
+      }
     } catch (error: any) {
       // toast
       toast.error(error?.message || 'Error logging in');

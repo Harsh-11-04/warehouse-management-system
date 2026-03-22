@@ -34,7 +34,7 @@ const entityColors: Record<string, string> = {
 const ActivityLogPage = () => {
   const [page, setPage] = useState(1)
   const [entityFilter, setEntityFilter] = useState('')
-  const { data, isLoading, isError } = useGetActivityLogsQuery({ page, entity: entityFilter })
+  const { data, isLoading, isError } = useGetActivityLogsQuery({ page, entity: entityFilter, system: 'warehouse' })
 
   const logs = data?.logs || []
   const hasMore = data?.more || false

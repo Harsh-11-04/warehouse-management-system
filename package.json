@@ -1,0 +1,72 @@
+{
+  "name": "jattkart-pos",
+  "version": "1.0.0",
+  "description": "Jattkart POS — Desktop Point of Sale System",
+  "author": "Harsh Pawar (Harsh-11-04)",
+  "license": "ISC",
+  "main": "electron/main.js",
+  "private": true,
+  "scripts": {
+    "frontend:build": "cd frontend && set VITE_BACKEND_URL=http://127.0.0.1:4000/api/v1&& npm run build",
+    "electron:dev": "npm run frontend:build && electron .",
+    "electron:build": "npm run frontend:build && electron-builder --win",
+    "postinstall": "cd backend && npm install && cd ../frontend && npm install"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8",
+    "png-to-ico": "^3.0.1"
+  },
+  "build": {
+    "appId": "com.jattkart.pos",
+    "productName": "Jattkart POS",
+    "copyright": "Copyright © 2026 Jattkart",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "electron/**/*",
+      "!**/.git/**"
+    ],
+    "extraResources": [
+      {
+        "from": "backend",
+        "to": "backend",
+        "filter": [
+          "**/*",
+          "!scripts/**",
+          "!.env.cloud",
+          "!.env.shop",
+          "!node_modules/.cache/**"
+        ]
+      },
+      {
+        "from": "frontend/dist",
+        "to": "frontend/dist",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "asar": false,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "electron/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Jattkart POS"
+    }
+  }
+}

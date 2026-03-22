@@ -12,6 +12,14 @@ import { ShipmentApi } from "./queries/Shipment.query";
 import { ReportApi } from "./queries/Report.query";
 import { ActivityLogApi } from "./queries/ActivityLog.query";
 import { ReorderSuggestionApi } from "./queries/ReorderSuggestion.query";
+import { PurchaseOrderApi } from "./queries/PurchaseOrder.query";
+import { BillingCustomerApi } from "./queries/BillingCustomer.query";
+import { BillingProductApi } from "./queries/BillingProduct.query";
+import { BillingInvoiceApi } from "./queries/BillingInvoice.query";
+import BillingSettingsApi from "./queries/BillingSettings.query";
+import { CloudAnalyticsApi } from "./queries/CloudAnalytics.query";
+import { SyncApi } from "./queries/Sync.query";
+import { CloudSyncAuditApi } from "./queries/CloudSyncAudit.query";
 
 export const store = configureStore({
     reducer: {
@@ -26,7 +34,15 @@ export const store = configureStore({
         [ShipmentApi.reducerPath]: ShipmentApi.reducer,
         [ReportApi.reducerPath]: ReportApi.reducer,
         [ActivityLogApi.reducerPath]: ActivityLogApi.reducer,
-        [ReorderSuggestionApi.reducerPath]: ReorderSuggestionApi.reducer
+        [ReorderSuggestionApi.reducerPath]: ReorderSuggestionApi.reducer,
+        [PurchaseOrderApi.reducerPath]: PurchaseOrderApi.reducer,
+        [BillingCustomerApi.reducerPath]: BillingCustomerApi.reducer,
+        [BillingProductApi.reducerPath]: BillingProductApi.reducer,
+        [BillingInvoiceApi.reducerPath]: BillingInvoiceApi.reducer,
+        [BillingSettingsApi.reducerPath]: BillingSettingsApi.reducer,
+        [CloudAnalyticsApi.reducerPath]: CloudAnalyticsApi.reducer,
+        [SyncApi.reducerPath]: SyncApi.reducer,
+        [CloudSyncAuditApi.reducerPath]: CloudSyncAuditApi.reducer
     },
 
     middleware: (d) => d().concat(
@@ -39,7 +55,15 @@ export const store = configureStore({
         ShipmentApi.middleware,
         ReportApi.middleware,
         ActivityLogApi.middleware,
-        ReorderSuggestionApi.middleware
+        ReorderSuggestionApi.middleware,
+        PurchaseOrderApi.middleware,
+        BillingCustomerApi.middleware,
+        BillingProductApi.middleware,
+        BillingInvoiceApi.middleware,
+        BillingSettingsApi.middleware,
+        CloudAnalyticsApi.middleware,
+        SyncApi.middleware,
+        CloudSyncAuditApi.middleware
     )
 })
 

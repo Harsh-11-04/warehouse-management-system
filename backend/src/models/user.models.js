@@ -21,8 +21,16 @@ const Schema = new mongoose.Schema({
         type: String,
         enum: ['admin', 'manager', 'warehouse_staff'],
         default: 'warehouse_staff'
+    },
+    shopId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "CloudShop",
+        default: null,
+        index: true
     }
 }, { timestamps: true })
+
+Schema.index({ shopId: 1, role: 1 })
 
 
 // 

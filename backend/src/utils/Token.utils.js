@@ -4,7 +4,8 @@ const { PUBLIC_DATA } = require("../../constant")
 exports.generatoken = (user, expire = '1d') => {
     const token = jwt.sign({
         userId: user._id,
-        role: user.role || 'warehouse_staff'
+        role: user.role || 'warehouse_staff',
+        shopId: user.shopId || null
     }, PUBLIC_DATA.jwt_auth, {
         expiresIn: expire
     })

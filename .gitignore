@@ -18,6 +18,8 @@ dist/
 dist-ssr/
 build/
 out/
+dist-electron/
+release/
 *.log
 
 # Editor directories and files

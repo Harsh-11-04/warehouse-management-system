@@ -65,6 +65,42 @@ const routes = [
     {
         path: '/demo',
         route: require("./DemoData.route")
+    },
+    {
+        path: '/billing/customers',
+        route: require("./BillingCustomer.route")
+    },
+    {
+        path: '/billing/products',
+        route: require("./BillingProduct.route")
+    },
+    {
+        path: '/billing/invoices',
+        route: require("./BillingInvoice.route")
+    },
+    {
+        path: '/billing/settings',
+        route: require("./BillingSettings.route")
+    },
+    {
+        path: '/sync',
+        route: require("./Sync.route")
+    },
+    {
+        path: '/cloud/sync',
+        route: require("./CloudSync.route")
+    },
+    {
+        path: '/cloud/catalog',
+        route: require("./CloudCatalog.route")
+    },
+    {
+        path: '/cloud/analytics',
+        route: require("./CloudAnalytics.route")
+    },
+    {
+        path: '/cloud/sync-audit',
+        route: require("./CloudSyncAudit.route")
     }
 ]
 

@@ -5,7 +5,7 @@ import MainLayout from './layout/MainLayout'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useDispatch, useSelector } from 'react-redux'
-import { setUser, UserSlicePath } from './provider/slice/user.slice'
+import { removeUser, setUser, UserSlicePath } from './provider/slice/user.slice'
 function App() {
   const [loading, SetLoading] = useState(true)
   const navigate = useNavigate()
@@ -24,14 +24,18 @@ function App() {
       })
 
       console.log(data.user);
-      dispatch(setUser(data.user));
+      dispatch(setUser({
+        ...data.user,
+        shop: data.shop || null
+      }));
 
 
       SetLoading(false)
       return
     } catch (error) {
       console.log(error);
-
+      localStorage.removeItem("token")
+      dispatch(removeUser())
       navigate("/login")
       return
     }
@@ -41,6 +45,7 @@ function App() {
     const token = localStorage.getItem("token") || ''
 
     if (!token) {
+      dispatch(removeUser())
       navigate("/login")
       return
     } else {

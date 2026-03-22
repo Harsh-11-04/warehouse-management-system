@@ -2,14 +2,23 @@ const httpStatus = require("http-status")
 const { UserModel, ProfileModel } = require("../models")
 const ApiError = require("../utils/ApiError")
 const { generatoken } = require("../utils/Token.utils")
+const CloudSyncService = require("./CloudSync.service")
 const axios = require("axios")
 const bcrypt = require("bcryptjs")
+
+const buildPublicUser = (user) => ({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    shopId: user.shopId || null
+})
 
 class AuthService {
     static async RegisterUser(body) {
 
         // request
-        const { email, password, name, token } = body
+        const { email, password, name, token, shopCode } = body
 
         // console.log("1---- ",token);
 
@@ -40,11 +49,25 @@ class AuthService {
         // Hash password before saving
         const hashedPassword = await bcrypt.hash(password, 10)
 
+        let joinedShop = null
+        if (shopCode) {
+            joinedShop = await CloudSyncService.getShopByCode(shopCode)
+            if (!joinedShop) {
+                throw new ApiError(httpStatus.BAD_REQUEST, "Invalid shop code")
+            }
+        }
+
         const user = await UserModel.create({
             email,
             password: hashedPassword,
-            name
+            name,
+            shopId: joinedShop?._id || null
         })
+
+        const shop = joinedShop || await CloudSyncService.ensureShopForUser(user._id)
+        if (!user.shopId) {
+            user.shopId = shop._id
+        }
 
         const tokend = generatoken(user)
         const refresh_token = generatoken(user, '2d')
@@ -56,7 +79,9 @@ class AuthService {
 
         return {
             msg: "User Register Successflly",
-            token: tokend
+            token: tokend,
+            user: buildPublicUser(user),
+            shop: CloudSyncService.formatPublicShop(shop)
         }
 
     }
@@ -90,28 +115,42 @@ class AuthService {
             return
         }
 
+        const shop = await CloudSyncService.ensureShopForUser(checkExist._id)
+        if (!checkExist.shopId || String(checkExist.shopId) !== String(shop._id)) {
+            checkExist.shopId = shop._id
+            await checkExist.save()
+        }
+
         const tokend = generatoken(checkExist)
 
         return {
             msg: "User Login Successflly",
-            token: tokend
+            token: tokend,
+            user: buildPublicUser(checkExist),
+            shop: CloudSyncService.formatPublicShop(shop)
         }
 
     }
     static async ProfileService(user) {
 
-        const checkExist = await UserModel.findById(user).select("name email role")
+        const checkExist = await UserModel.findById(user).select("name email role shopId")
         if (!checkExist) {
             throw new ApiError(httpStatus.BAD_REQUEST, "User Not Regisrered")
             return
         }
 
+        const shop = await CloudSyncService.ensureShopForUser(checkExist._id)
+        if (!checkExist.shopId || String(checkExist.shopId) !== String(shop._id)) {
+            checkExist.shopId = shop._id
+            await checkExist.save()
+        }
 
 
 
         return {
             msg: "Data fetched",
-            user: checkExist
+            user: buildPublicUser(checkExist),
+            shop: CloudSyncService.formatPublicShop(shop)
         }
 
     }

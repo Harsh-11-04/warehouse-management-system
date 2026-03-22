@@ -13,6 +13,9 @@ import { TbMapPin } from "react-icons/tb";
 import { MdOutlineAssignment } from "react-icons/md";
 import { BiTransfer } from "react-icons/bi";
 import { TbTruckDelivery, TbReportAnalytics, TbActivity } from "react-icons/tb";
+import { FiShoppingCart } from "react-icons/fi";
+import { RiMoneyDollarCircleLine } from "react-icons/ri";
+
 import { Link } from 'react-router-dom';
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const selector = useSelector(SidebarSlicePath)
@@ -47,7 +50,12 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
               <MenuItem component={<Link to="/picking" />} icon={<BiTransfer className="text-xl" />}> Pick / Transfer </MenuItem>
               <MenuItem component={<Link to="/shipments" />} icon={<TbTruckDelivery className="text-xl" />}> Shipments </MenuItem>
               <MenuItem component={<Link to="/reorder-suggestions" />} icon={<TbReportAnalytics className="text-xl" />}> Reorder Suggestions </MenuItem>
+              {canManage && <MenuItem component={<Link to="/purchase-orders" />} icon={<FiShoppingCart className="text-xl" />}> Purchase Orders </MenuItem>}
             </SubMenu>
+
+            {canManage && (
+              <MenuItem component={<Link to="/billing" />} icon={<RiMoneyDollarCircleLine className="text-2xl" />}>Go to Billing</MenuItem>
+            )}
 
             {canViewReports && (
               <>

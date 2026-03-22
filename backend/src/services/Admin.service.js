@@ -3,10 +3,11 @@ const CatchAsync = require("../utils/CatchAsync")
 const { UserModel } = require("../models")
 const ApiError = require("../utils/ApiError")
 const { generatoken } = require("../utils/Token.utils")
+const CloudSyncService = require("./CloudSync.service")
 const bcrypt = require("bcryptjs")
 
 class AdminService {
-    static async createTestUsers() {
+    static async createTestUsers(adminUserId = null) {
         const testUsers = [
             {
                 email: "admin@test.com",
@@ -28,6 +29,10 @@ class AdminService {
             }
         ]
 
+        const adminShop = adminUserId
+            ? await CloudSyncService.ensureShopForUser(adminUserId)
+            : null
+
         const results = []
         
         for (const userData of testUsers) {
@@ -47,8 +52,14 @@ class AdminService {
                     email: userData.email,
                     name: userData.name,
                     password: hashedPassword,
-                    role: userData.role
+                    role: userData.role,
+                    shopId: adminShop?._id || null
                 })
+
+                if (!adminShop) {
+                    const userShop = await CloudSyncService.ensureShopForUser(user._id)
+                    user.shopId = userShop._id
+                }
 
                 // Generate token
                 const token = generatoken(user)
@@ -57,6 +68,7 @@ class AdminService {
                     email: userData.email, 
                     status: "created", 
                     role: userData.role,
+                    shopCode: adminShop?.shopCode || null,
                     token: token.substring(0, 50) + "..." // Show partial token for testing
                 })
             } catch (error) {

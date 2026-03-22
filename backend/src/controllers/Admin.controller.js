@@ -5,7 +5,7 @@ const { authMiddleware, adminOnly } = require("../middlewares/rbac.middleware")
 
 class AdminController {
     static createTestUsers = CatchAsync(async (req, res) => {
-        const result = await AdminService.createTestUsers()
+        const result = await AdminService.createTestUsers(req.user)
         res.status(httpStatus.CREATED).json(result)
     })
 

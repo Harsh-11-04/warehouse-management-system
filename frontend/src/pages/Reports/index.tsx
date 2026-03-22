@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import { Button } from 'primereact/button'
 import { useGetWarehouseWiseStockQuery, useGetMonthlyInventorySummaryQuery } from '../../provider/queries/Report.query'
+import axios from 'axios'
+import { toast } from 'sonner'
 
 const ReportsPage = () => {
   const { data: warehouseStock } = useGetWarehouseWiseStockQuery()
   const { data: monthlySummary } = useGetMonthlyInventorySummaryQuery({ months: 6 })
-  const [csvDownloading, setCsvDownloading] = useState(false)
+  const [csvDownloading, setCsvDownloading] = useState('')
 
-  const exportCsv = () => {
+  const exportWarehouseCsv = () => {
     if (!warehouseStock?.warehouses?.length) return
-    setCsvDownloading(true)
+    setCsvDownloading('warehouse')
     const rows = [
       ['Warehouse', 'Total Quantity', 'Product Count', 'Total Value'],
       ...warehouseStock.warehouses.map((w: any) => [
@@ -27,7 +29,28 @@ const ReportsPage = () => {
     a.download = 'warehouse-stock.csv'
     a.click()
     URL.revokeObjectURL(url)
-    setCsvDownloading(false)
+    setCsvDownloading('')
+  }
+
+  const downloadFromBackend = async (endpoint: string, filename: string, key: string) => {
+    setCsvDownloading(key)
+    try {
+      const token = localStorage.getItem('token')
+      const res = await axios.get(import.meta.env.VITE_BACKEND_URL + endpoint, {
+        headers: { Authorization: 'Bearer ' + token },
+        responseType: 'blob',
+      })
+      const url = URL.createObjectURL(res.data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      a.click()
+      URL.revokeObjectURL(url)
+      toast.success(`${filename} downloaded!`)
+    } catch (err: any) {
+      toast.error('Export failed — ' + (err.message || 'Unknown error'))
+    }
+    setCsvDownloading('')
   }
 
   const printReport = () => {
@@ -38,9 +61,31 @@ const ReportsPage = () => {
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h1 className="text-2xl font-semibold">Reports</h1>
-        <div className="flex gap-2">
-          <Button label="Export CSV" icon="pi pi-file" onClick={exportCsv} disabled={csvDownloading} />
-          <Button label="Print / PDF" icon="pi pi-print" severity="secondary" onClick={printReport} />
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            label="Warehouse CSV"
+            icon="pi pi-file"
+            size="small"
+            onClick={exportWarehouseCsv}
+            loading={csvDownloading === 'warehouse'}
+          />
+          <Button
+            label="Low Stock CSV"
+            icon="pi pi-exclamation-triangle"
+            size="small"
+            severity="warning"
+            onClick={() => downloadFromBackend('/report/export/low-stock', 'low-stock-report.csv', 'lowstock')}
+            loading={csvDownloading === 'lowstock'}
+          />
+          <Button
+            label="Product Movements CSV"
+            icon="pi pi-arrows-h"
+            size="small"
+            severity="info"
+            onClick={() => downloadFromBackend('/report/export/product-movements', 'product-movements.csv', 'movements')}
+            loading={csvDownloading === 'movements'}
+          />
+          <Button label="Print / PDF" icon="pi pi-print" size="small" severity="secondary" onClick={printReport} />
         </div>
       </div>
 
@@ -118,3 +163,4 @@ const ReportsPage = () => {
 }
 
 export default ReportsPage
+
