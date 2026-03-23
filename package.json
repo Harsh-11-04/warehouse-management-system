@@ -1,6 +1,6 @@
 {
   "name": "jattkart-pos",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Jattkart POS — Desktop Point of Sale System",
   "author": "Harsh Pawar (Harsh-11-04)",
   "license": "ISC",
@@ -60,6 +60,13 @@
       ],
       "icon": "electron/icon.png"
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Jattkart",
+        "repo": "jattkart-pos"
+      }
+    ],
     "nsis": {
       "oneClick": false,
       "perMachine": false,
@@ -68,5 +75,9 @@
       "createStartMenuShortcut": true,
       "shortcutName": "Jattkart POS"
     }
+  },
+  "dependencies": {
+    "electron-log": "^5.4.3",
+    "electron-updater": "^6.8.3"
   }
 }

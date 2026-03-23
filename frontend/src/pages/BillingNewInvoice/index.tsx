@@ -62,7 +62,7 @@ const BillingNewInvoicePage = () => {
                     const qty = i.quantity + 1
                     const subtotal = i.price * qty
                     const gstAmt = (subtotal * i.gstPercent) / 100
-                    return { ...i, quantity: qty, gstAmount: Math.round(gstAmt * 100) / 100, lineTotal: Math.round((subtotal + gstAmt) * 100) / 100 }
+                    return { ...i, quantity: qty, gstAmount: Math.round(gstAmt * 100) / 100, lineTotal: Math.round(subtotal * 100) / 100 }
                 }
                 return i
             }))
@@ -80,7 +80,7 @@ const BillingNewInvoicePage = () => {
                 cardPrice: product.cardPrice || 0,
                 gstPercent: product.gstPercent || 0,
                 gstAmount: Math.round(gstAmt * 100) / 100,
-                lineTotal: Math.round((subtotal + gstAmt) * 100) / 100,
+                lineTotal: Math.round(subtotal * 100) / 100,
                 stock: product.stock || 0,
             }])
         }
@@ -98,7 +98,7 @@ const BillingNewInvoicePage = () => {
                 ...item,
                 price: newPrice,
                 gstAmount: Math.round(gstAmt * 100) / 100,
-                lineTotal: Math.round((subtotal + gstAmt) * 100) / 100
+                lineTotal: Math.round(subtotal * 100) / 100
             }
         }))
     }
@@ -184,7 +184,7 @@ const BillingNewInvoicePage = () => {
             if (i === idx) {
                 const subtotal = item.price * qty
                 const gstAmt = (subtotal * item.gstPercent) / 100
-                return { ...item, quantity: qty, gstAmount: Math.round(gstAmt * 100) / 100, lineTotal: Math.round((subtotal + gstAmt) * 100) / 100 }
+                return { ...item, quantity: qty, gstAmount: Math.round(gstAmt * 100) / 100, lineTotal: Math.round(subtotal * 100) / 100 }
             }
             return item
         }))
@@ -196,7 +196,7 @@ const BillingNewInvoicePage = () => {
 
     const subtotal = items.reduce((sum, i) => sum + (i.price * i.quantity), 0)
     const totalGst = items.reduce((sum, i) => sum + i.gstAmount, 0)
-    const rawTotal = Math.round((subtotal + totalGst) * 100) / 100
+    const rawTotal = Math.round(subtotal * 100) / 100
 
     let discountAmount = 0
     const discountNum = Number(discount) || 0

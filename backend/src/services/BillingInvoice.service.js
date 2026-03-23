@@ -230,7 +230,7 @@ class BillingInvoiceService {
 
                 const lineSubtotal = price * quantity
                 const gstAmount = (lineSubtotal * gstPercent) / 100
-                const lineTotal = lineSubtotal + gstAmount
+                const lineTotal = lineSubtotal
                 const purchasePrice = product.purchasePrice || 0
                 const itemProfit = (price - purchasePrice) * quantity
 
@@ -251,7 +251,7 @@ class BillingInvoiceService {
                 }
             })
 
-            const rawTotal = Math.round((subtotal + totalGst) * 100) / 100
+            const rawTotal = Math.round(subtotal * 100) / 100
             const discountType = data.discountType || 'flat'
             const discountInput = Number(data.discount) || 0
             let discountAmount = 0
@@ -723,7 +723,7 @@ class BillingInvoiceService {
 
             invoice.subtotal -= refundSubtotal
             invoice.totalGst -= refundGst
-            invoice.grandTotal -= (refundSubtotal + refundGst)
+            invoice.grandTotal -= refundSubtotal
             invoice.totalProfit = (invoice.totalProfit || 0) - refundProfit
 
             invoice.subtotal = Math.round(invoice.subtotal * 100) / 100
