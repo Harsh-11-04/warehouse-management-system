@@ -1,0 +1,23 @@
+﻿ M backend/src/controllers/BillingInvoice.controller.js
+ M backend/src/models/BillingInvoice.models.js
+ M backend/src/routes/BillingInvoice.route.js
+ M backend/src/services/BillingInvoice.service.js
+ M backend/src/services/BillingProduct.service.js
+ M electron/main.js
+ M electron/preload.js
+ M frontend/src/App.tsx
+ M frontend/src/pages/BillingInvoiceDetail/index.tsx
+ M frontend/src/pages/BillingNewInvoice/index.tsx
+ M frontend/src/pages/Reports/index.tsx
+ M frontend/src/provider/queries/BillingInvoice.query.ts
+ M package-lock.json
+ M package.json
+?? DEPLOYMENT_UPDATE_GUIDE.md
+?? backend/scripts/count-data.js
+?? backend/scripts/reset-cloud-shop.js
+?? backend/scripts/reset-shop.js
+?? backend/scripts/sync-mrp.js
+?? electron/printing/
+?? frontend/src/components/AutoUpdaterUI.tsx
+?? frontend/src/services/
+?? status.txt

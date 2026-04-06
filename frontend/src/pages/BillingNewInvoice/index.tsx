@@ -7,11 +7,14 @@ import { useNavigate } from 'react-router-dom'
 import { useCreateBillingInvoiceMutation } from '../../provider/queries/BillingInvoice.query'
 import { useLazySearchBillingProductsQuery, useLazyGetBillingProductByBarcodeQuery } from '../../provider/queries/BillingProduct.query'
 import { useLazySearchBillingCustomersQuery } from '../../provider/queries/BillingCustomer.query'
+import { useGetBillingSettingsQuery } from '../../provider/queries/BillingSettings.query'
+import { printInvoice, getPrinters } from '../../services/printService'
 
 interface InvoiceItem {
     product: string
     name: string
     barcode: string
+    mrp: number
     quantity: number
     price: number
     sellingPrice: number
@@ -44,6 +47,9 @@ const BillingNewInvoicePage = () => {
     const [getByBarcode] = useLazyGetBillingProductByBarcodeQuery()
     const [searchCustomers, { data: customerResults }] = useLazySearchBillingCustomersQuery()
     const [createInvoice, { isLoading: creating }] = useCreateBillingInvoiceMutation()
+    
+    const { data: settingsData } = useGetBillingSettingsQuery()
+    const settings = settingsData?.settings || {}
 
     useEffect(() => {
         barcodeRef.current?.focus()
@@ -74,6 +80,7 @@ const BillingNewInvoicePage = () => {
                 product: product._id,
                 name: product.name,
                 barcode: product.barcode || '',
+                mrp: product.mrp || 0,
                 quantity: 1,
                 price: effectivePrice,
                 sellingPrice: product.sellingPrice,
@@ -223,7 +230,7 @@ const BillingNewInvoicePage = () => {
         try {
             const payload = {
                 items: items.map(i => ({
-                    product: i.product, name: i.name, barcode: i.barcode,
+                    product: i.product, name: i.name, barcode: i.barcode, mrp: i.mrp,
                     quantity: i.quantity, price: i.price, gstPercent: i.gstPercent
                 })),
                 customer: customerId,
@@ -232,8 +239,21 @@ const BillingNewInvoicePage = () => {
             }
             const res: any = await createInvoice(payload)
             if (res.error) { toast.error(res.error?.data?.message || 'Failed to create invoice'); return }
-            toast.success(`Invoice ${res.data?.invoice?.invoiceNumber} created!`)
-            navigate(`/billing/invoice/${res.data.invoice._id}`)
+            
+            const newInvoice = res.data?.invoice
+            toast.success(`Invoice ${newInvoice?.invoiceNumber} created!`)
+
+            // Detect printers to check if thermal is available
+            const printers = await getPrinters()
+            const hasThermal = printers.some(p => p.isThermal)
+            
+            // Auto-print only if thermal is detected, otherwise user prints from detail page
+            if (hasThermal) {
+                 toast.info('Auto-printing receipt...')
+                 await printInvoice(newInvoice, settings, { layout: 'thermal', silent: true })
+            }
+            
+            navigate(`/billing/invoice/${newInvoice._id}`)
         } catch (e: any) { toast.error(e.message || 'Error') }
     }
 
@@ -302,6 +322,7 @@ const BillingNewInvoicePage = () => {
                                     <tr>
                                         <th className="text-left p-2 font-medium">#</th>
                                         <th className="text-left p-2 font-medium">Product</th>
+                                        <th className="text-right p-2 font-medium">MRP</th>
                                         <th className="text-right p-2 font-medium">Price</th>
                                         <th className="text-center p-2 font-medium">Qty</th>
                                         <th className="text-right p-2 font-medium">GST%</th>
@@ -316,6 +337,7 @@ const BillingNewInvoicePage = () => {
                                         <tr key={idx} className="border-t border-gray-100">
                                             <td className="p-2 text-gray-400">{idx + 1}</td>
                                             <td className="p-2 font-medium">{item.name}</td>
+                                            <td className="p-2 text-right">₹{item.mrp.toLocaleString('en-IN')}</td>
                                             <td className="p-2 text-right">₹{item.price.toLocaleString('en-IN')}</td>
                                             <td className="p-2 text-center">
                                                 <div className="flex items-center justify-center gap-1">
@@ -337,7 +359,7 @@ const BillingNewInvoicePage = () => {
                                             </td>
                                         </tr>
                                     )) : (
-                                        <tr><td colSpan={9} className="p-6 text-center text-gray-400">Scan or search products to add items</td></tr>
+                                        <tr><td colSpan={10} className="p-6 text-center text-gray-400">Scan or search products to add items</td></tr>
                                     )}
                                 </tbody>
                             </table>

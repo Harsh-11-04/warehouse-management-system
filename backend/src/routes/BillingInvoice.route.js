@@ -18,5 +18,6 @@ router.put("/return/:id", authorize('admin', 'manager', 'warehouse_staff'), Bill
 router.put("/add-items/:id", authorize('admin', 'manager', 'warehouse_staff'), BillingInvoiceController.addItems)
 router.put("/void/:id", authorize('admin', 'manager'), BillingInvoiceController.voidInvoice)
 router.get("/customer/:customerId", BillingInvoiceController.getByCustomer)
+router.delete("/delete/:id", authorize('admin'), BillingInvoiceController.deleteInvoice)
 
 module.exports = router

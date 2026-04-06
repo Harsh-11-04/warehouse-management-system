@@ -2,6 +2,7 @@
 import { Outlet, useNavigate } from 'react-router-dom'
 import Header from './components/Header'
 import MainLayout from './layout/MainLayout'
+import AutoUpdaterUI from './components/AutoUpdaterUI'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useDispatch, useSelector } from 'react-redux'
@@ -72,6 +73,7 @@ function App() {
       <MainLayout>
         <Outlet />
       </MainLayout>
+      <AutoUpdaterUI />
     </div>
   )
 }

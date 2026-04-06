@@ -54,7 +54,30 @@ const ReportsPage = () => {
   }
 
   const printReport = () => {
-    window.print()
+    const content = document.querySelector('.p-4.space-y-4')
+    if (!content) return
+
+    const printWindow = window.open('', '_blank', 'width=900,height=700')
+    if (!printWindow) { toast.error('Could not open print window'); return }
+
+    const stylesheets = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+      .map(el => el.outerHTML).join('\n')
+
+    printWindow.document.write(`
+      <!DOCTYPE html><html><head><title>Reports</title>${stylesheets}
+      <style>
+        body { margin:0; padding:20px; background:white; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
+        @media print { body { padding:0; } .no-print { display:none!important; } }
+      </style></head><body>
+        ${content.innerHTML}
+        <div class="no-print" style="margin-top:24px;text-align:center;padding:16px;">
+          <button onclick="window.print()" style="padding:10px 32px;background:#2563eb;color:white;border:none;border-radius:8px;font-size:15px;cursor:pointer;margin-right:12px;">🖨️ Print</button>
+          <button onclick="window.close()" style="padding:10px 32px;background:#6b7280;color:white;border:none;border-radius:8px;font-size:15px;cursor:pointer;">✕ Close</button>
+        </div>
+      </body></html>
+    `)
+    printWindow.document.close()
+    printWindow.onload = () => { printWindow.focus(); printWindow.print() }
   }
 
   return (

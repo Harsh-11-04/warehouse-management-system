@@ -113,6 +113,14 @@ class BillingInvoiceController {
             next(error)
         }
     }
+    static async deleteInvoice(req, res, next) {
+        try {
+            const result = await BillingInvoiceService.deleteInvoice(req.user, req.params.id)
+            res.json(result)
+        } catch (error) {
+            next(error)
+        }
+    }
 }
 
 module.exports = BillingInvoiceController

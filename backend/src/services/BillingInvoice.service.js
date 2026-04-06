@@ -1106,6 +1106,95 @@ class BillingInvoiceService {
             .limit(50)
             .select('invoiceNumber grandTotal paymentMode paymentStatus createdAt items discount')
     }
+    static async deleteInvoice(userId, id) {
+        return this.runWithOptionalTransaction(async (session) => {
+            const invoiceQuery = BillingInvoice.findOne({ _id: id, user: userId })
+            const invoice = await withOptionalSession(invoiceQuery, session)
+            
+            if (!invoice) {
+                throw new ApiError(httpStatus.NOT_FOUND, "Invoice not found")
+            }
+
+            const inventorySyncEvents = []
+
+            // Restore in-stock quantities completely before dropping the invoice
+            for (const item of invoice.items) {
+                const restoreQty = item.quantity - (item.returnedQuantity || 0)
+                if (restoreQty <= 0) {
+                    continue
+                }
+
+                await BillingProduct.findOneAndUpdate(
+                    { _id: item.product, user: userId },
+                    { $inc: { stock: restoreQty } },
+                    session ? { session } : {}
+                )
+
+                inventorySyncEvents.push({
+                    entityType: 'inventory_movement',
+                    entityId: item.product,
+                    operation: 'create',
+                    sourceModule: 'billing',
+                    payload: {
+                        productId: item.product.toString(),
+                        productName: item.name,
+                        quantityDelta: restoreQty, // stock restored due to deletion
+                        movementType: 'delete',
+                        refType: 'BillingInvoice',
+                        refId: invoice._id,
+                        refNumber: invoice.invoiceNumber,
+                        createdAt: new Date()
+                    },
+                    metadata: {
+                        invoiceNumber: invoice.invoiceNumber,
+                        localOnly: true,
+                        syncVersion: 1
+                    }
+                })
+            }
+
+            const deletedInvoiceNumber = invoice.invoiceNumber
+            const deletedGrandTotal = invoice.grandTotal
+
+            await BillingInvoice.deleteOne({ _id: id, user: userId }, session ? { session } : {})
+
+            const syncEvents = [
+                {
+                    entityType: 'sale',
+                    entityId: invoice._id,
+                    operation: 'delete',
+                    sourceModule: 'billing',
+                    payload: {
+                        billId: deletedInvoiceNumber,
+                        invoiceId: invoice._id,
+                        deletedAt: new Date()
+                    },
+                    metadata: {
+                        invoiceNumber: deletedInvoiceNumber,
+                        localOnly: true,
+                        syncVersion: 1
+                    }
+                },
+                ...inventorySyncEvents
+            ]
+
+            await SyncService.enqueueMany(userId, syncEvents, {
+                session,
+                touchState: true
+            })
+
+            await ActivityLogService.log(
+                userId,
+                'DELETE',
+                'BillingInvoice',
+                id,
+                `Permanently deleted invoice ${deletedInvoiceNumber}. Previous total: ${deletedGrandTotal}`,
+                session ? { session } : {}
+            )
+
+            return { msg: "Invoice permanently deleted and stock restored." }
+        })
+    }
 }
 
 module.exports = BillingInvoiceService

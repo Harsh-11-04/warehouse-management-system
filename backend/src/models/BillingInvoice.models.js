@@ -14,6 +14,10 @@ const InvoiceItemSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    mrp: {
+        type: Number,
+        default: 0
+    },
     quantity: {
         type: Number,
         required: true,

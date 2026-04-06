@@ -69,7 +69,7 @@ class BillingProductService {
                 { barcode: { $regex: query, $options: 'i' } }
             ]
         }
-        return BillingProduct.find(filter).limit(10).select('name barcode sellingPrice cardPrice gstPercent stock')
+        return BillingProduct.find(filter).limit(10).select('name barcode mrp sellingPrice cardPrice gstPercent stock')
     }
 
     static async update(userId, id, data) {

@@ -1,21 +1,24 @@
 {
   "name": "jattkart-pos",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Jattkart POS — Desktop Point of Sale System",
   "author": "Harsh Pawar (Harsh-11-04)",
   "license": "ISC",
   "main": "electron/main.js",
   "private": true,
   "scripts": {
+    "clean": "npx rimraf dist-electron",
     "frontend:build": "cd frontend && set VITE_BACKEND_URL=http://127.0.0.1:4000/api/v1&& npm run build",
     "electron:dev": "npm run frontend:build && electron .",
-    "electron:build": "npm run frontend:build && electron-builder --win",
+    "build": "npm run clean && npm run frontend:build && electron-builder --win",
+    "publish": "npm run clean && npm run frontend:build && electron-builder --win -p always",
     "postinstall": "cd backend && npm install && cd ../frontend && npm install"
   },
   "devDependencies": {
     "electron": "^33.0.0",
     "electron-builder": "^25.1.8",
-    "png-to-ico": "^3.0.1"
+    "png-to-ico": "^3.0.1",
+    "rimraf": "^5.0.0"
   },
   "build": {
     "appId": "com.jattkart.pos",
@@ -24,6 +27,7 @@
     "directories": {
       "output": "dist-electron"
     },
+    "artifactName": "jattkart-pos-setup-${version}.${ext}",
     "files": [
       "electron/**/*",
       "!**/.git/**"

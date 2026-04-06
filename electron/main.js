@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog } = require('electron')
+const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron')
 const { fork } = require('child_process')
 const path = require('path')
 const http = require('http')
@@ -224,6 +224,24 @@ function createMainWindow() {
         }
     })
 
+    // Allow window.open() popups (used for print preview)
+    mainWindow.webContents.setWindowOpenHandler(({ url, features }) => {
+        log(`window.open requested: url="${url}" features="${features}"`)
+        return {
+            action: 'allow',
+            overrideBrowserWindowOptions: {
+                width: 900,
+                height: 700,
+                title: 'Print Preview — Jattkart POS',
+                autoHideMenuBar: true,
+                webPreferences: {
+                    nodeIntegration: false,
+                    contextIsolation: true
+                }
+            }
+        }
+    })
+
     // In production, backend serves static frontend files
     const loadURL = `http://127.0.0.1:${BACKEND_PORT}`
     log(`Loading main window: ${loadURL}`)
@@ -285,6 +303,161 @@ async function gracefulShutdown() {
     log('All child processes terminated')
 }
 
+// ─── Auto Updater ───────────────────────────────────────────
+const electronLog = require('electron-log');
+const { autoUpdater } = require('electron-updater');
+autoUpdater.logger = electronLog;
+autoUpdater.logger.transports.file.level = 'info';
+
+function setupAutoUpdater() {
+    autoUpdater.on('checking-for-update', () => {
+        electronLog.info('Checking for update...');
+        if (mainWindow) mainWindow.webContents.send('updater:checking-for-update');
+    });
+
+    autoUpdater.on('update-available', (info) => {
+        electronLog.info('Update available.');
+        if (mainWindow) mainWindow.webContents.send('updater:update-available', info);
+    });
+
+    autoUpdater.on('update-not-available', (info) => {
+        electronLog.info('Update not available.');
+        if (mainWindow) mainWindow.webContents.send('updater:update-not-available', info);
+    });
+
+    autoUpdater.on('error', (err) => {
+        electronLog.info('Error in auto-updater. ' + err);
+        if (mainWindow) mainWindow.webContents.send('updater:error', err?.message || String(err));
+    });
+
+    autoUpdater.on('download-progress', (progressObj) => {
+        let log_message = "Download speed: " + progressObj.bytesPerSecond;
+        log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+        log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+        electronLog.info(log_message);
+        if (mainWindow) mainWindow.webContents.send('updater:download-progress', progressObj);
+    });
+
+    autoUpdater.on('update-downloaded', (info) => {
+        electronLog.info('Update downloaded');
+        if (mainWindow) mainWindow.webContents.send('updater:update-downloaded', info);
+        
+        // 🔥 Automatically install and restart the app for zero-intervention update
+        isQuitting = true;
+        autoUpdater.quitAndInstall();
+    });
+
+    ipcMain.handle('updater:check', () => {
+        if (app.isPackaged) {
+            autoUpdater.checkForUpdatesAndNotify();
+        }
+    });
+
+    ipcMain.handle('updater:install', () => {
+        isQuitting = true;
+        autoUpdater.quitAndInstall();
+    });
+}
+
+// ─── Print Handlers ─────────────────────────────────────────
+const { printInvoice } = require('./printing/printManager')
+const { simplifyPrinterList } = require('./printing/printerUtils')
+
+function setupPrintHandlers() {
+    // ── print:invoice ──────────────────────────────────────────
+    // Unified print handler: auto-detects thermal vs A4, builds
+    // the correct HTML, prints via hidden BrowserWindow.
+    ipcMain.handle('print:invoice', async (_event, { invoice, settings, printerName, silent, layout }) => {
+        try {
+            log(`print:invoice — printer="${printerName || 'default'}" layout="${layout || 'auto'}" silent=${silent}`)
+            const result = await printInvoice({ invoice, settings, printerName, silent, layout })
+            if (!result.success) {
+                log(`print:invoice failed: ${result.error}`)
+            } else {
+                log(`print:invoice success for ${invoice?.invoiceNumber || 'unknown'}`)
+            }
+            return result
+        } catch (err) {
+            log(`print:invoice error: ${err.message}`)
+            return { success: false, error: err.message }
+        }
+    })
+
+    // ── print:get-printers ─────────────────────────────────────
+    // Returns available printers with thermal/standard detection.
+    ipcMain.handle('print:get-printers', async () => {
+        try {
+            if (!mainWindow) return { success: true, printers: [] }
+            const printers = await mainWindow.webContents.getPrintersAsync()
+            return { success: true, printers: simplifyPrinterList(printers) }
+        } catch (err) {
+            log(`print:get-printers error: ${err.message}`)
+            return { success: false, printers: [], error: err.message }
+        }
+    })
+
+    // ── print:preview ──────────────────────────────────────────
+    // Electron's Windows print dialog cannot show a page preview
+    // ("This app doesn't support print preview" is a hard OS limit).
+    // The solution: render to PDF silently → save to OS temp → open
+    // in the default PDF viewer (Edge / Adobe Reader) which has its
+    // own full preview panel and a Print button the user can use.
+    ipcMain.handle('print:preview', async (_event, pdfOptions = {}) => {
+        try {
+            if (!mainWindow) throw new Error('No main window')
+
+            const pdfData = await mainWindow.webContents.printToPDF({
+                printBackground: true,
+                margins: { marginType: 'printableArea' },
+                pageSize: 'A4',
+                ...pdfOptions
+            })
+
+            const os = require('os')
+            const tmpFile = path.join(os.tmpdir(), `jattkart-invoice-${Date.now()}.pdf`)
+            fs.writeFileSync(tmpFile, pdfData)
+
+            // Open in default PDF viewer — gives full preview + print
+            const errMsg = await shell.openPath(tmpFile)
+            if (errMsg) throw new Error(errMsg)
+
+            return { success: true, tmpFile }
+        } catch (err) {
+            log(`print:preview error: ${err.message}`)
+            return { success: false, reason: err.message }
+        }
+    })
+
+    // ── print:save-pdf ─────────────────────────────────────────
+    // Lets the user choose a save location and keeps the PDF.
+    ipcMain.handle('print:save-pdf', async (_event, pdfOptions = {}) => {
+        try {
+            if (!mainWindow) throw new Error('No main window')
+
+            const pdfData = await mainWindow.webContents.printToPDF({
+                printBackground: true,
+                margins: { marginType: 'printableArea' },
+                pageSize: 'A4',
+                ...pdfOptions
+            })
+
+            const { filePath, canceled } = await dialog.showSaveDialog(mainWindow, {
+                title: 'Save Invoice as PDF',
+                defaultPath: `invoice-${Date.now()}.pdf`,
+                filters: [{ name: 'PDF Files', extensions: ['pdf'] }]
+            })
+            if (canceled || !filePath) return { success: false, reason: 'cancelled' }
+
+            fs.writeFileSync(filePath, pdfData)
+            shell.openPath(filePath)
+            return { success: true, filePath }
+        } catch (err) {
+            log(`print:save-pdf error: ${err.message}`)
+            return { success: false, reason: err.message }
+        }
+    })
+}
+
 // ─── App Lifecycle ──────────────────────────────────────────
 app.on('ready', async () => {
     ensureLogDir()
@@ -294,6 +467,7 @@ app.on('ready', async () => {
     log(`Backend dir: ${backendDir}`)
     log(`Frontend dist: ${frontendDist}`)
 
+    setupPrintHandlers()
     createSplashWindow()
     startBackend()
 
@@ -304,6 +478,11 @@ app.on('ready', async () => {
 
         startSyncWorker()
         createMainWindow()
+        setupAutoUpdater()
+
+        if (app.isPackaged) {
+            autoUpdater.checkForUpdatesAndNotify()
+        }
     } catch (err) {
         log(`Startup failed: ${err.message}`)
         showErrorAndQuit(

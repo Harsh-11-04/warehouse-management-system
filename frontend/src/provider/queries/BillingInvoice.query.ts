@@ -83,6 +83,14 @@ export const BillingInvoiceApi = createApi({
                 headers: { Authorization: 'Bearer ' + localStorage.getItem('token') },
             }),
         }),
+        deleteBillingInvoice: builder.mutation<any, string>({
+            query: (id) => ({
+                url: `/billing/invoices/delete/${id}`,
+                method: 'DELETE',
+                headers: { Authorization: 'Bearer ' + localStorage.getItem('token') },
+            }),
+            invalidatesTags: ['BillingInvoices'],
+        }),
     }),
 })
 
@@ -95,5 +103,6 @@ export const {
     useReturnBillingInvoiceItemsMutation,
     useAddBillingInvoiceItemsMutation,
     useGetBillingReportsQuery,
+    useDeleteBillingInvoiceMutation,
     useLazyGetCustomerInvoicesQuery,
 } = BillingInvoiceApi

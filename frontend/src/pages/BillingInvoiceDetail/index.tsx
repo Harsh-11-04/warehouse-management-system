@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { UserSlicePath } from '../../provider/slice/user.slice'
 import { Button } from 'primereact/button'
@@ -11,9 +11,12 @@ import {
     useGetBillingInvoiceByIdQuery, 
     useUpdateBillingInvoicePaymentMutation, 
     useReturnBillingInvoiceItemsMutation,
-    useAddBillingInvoiceItemsMutation
+    useAddBillingInvoiceItemsMutation,
+    useDeleteBillingInvoiceMutation
 } from '../../provider/queries/BillingInvoice.query'
 import { useLazySearchBillingProductsQuery } from '../../provider/queries/BillingProduct.query'
+import { useGetBillingSettingsQuery } from '../../provider/queries/BillingSettings.query'
+import { printInvoice, saveAsPDF } from '../../services/printService'
 
 const BillingInvoiceDetailPage = () => {
     const { id } = useParams<{ id: string }>()
@@ -22,9 +25,15 @@ const BillingInvoiceDetailPage = () => {
     const [returnItemsMutation, { isLoading: returning }] = useReturnBillingInvoiceItemsMutation()
     const [addItemsMutation, { isLoading: adding }] = useAddBillingInvoiceItemsMutation()
     const [searchProducts, { data: productResults }] = useLazySearchBillingProductsQuery()
+    const { data: settingsData } = useGetBillingSettingsQuery()
+    const settings = settingsData?.settings || {}
     
     const user = useSelector(UserSlicePath) as { role?: string } | null;
     const isWorker = user?.role === 'warehouse_staff';
+    const isAdmin = user?.role === 'admin';
+
+    const navigate = useNavigate()
+    const [deleteInvoice, { isLoading: deleting }] = useDeleteBillingInvoiceMutation()
 
     const invoice = data?.invoice
     const [paymentMode, setPaymentMode] = useState<string | null>(null)
@@ -98,8 +107,89 @@ const BillingInvoiceDetailPage = () => {
             setSelectedNewItems([])
         } catch (e: any) { toast.error(e.data?.message || e.message || "Failed to add items") }
     }
+    // ── Unified Print handler ─────────────────────────────
+    // Auto-detects layout based on default printer (thermal vs a4).
+    // Uses the new custom electron print process to prevent scaling issues.
+    const handlePrint = async () => {
+        toast.info('Sending to printer…')
+        const result = await printInvoice(invoice, settings)
+        if (!result.success) {
+            toast.error(result.error || 'Print failed')
+        } else {
+            toast.success('Print job sent')
+        }
+    }
 
-    const handlePrint = () => window.print()
+    const handleDeleteInvoice = async () => {
+        if (!window.confirm("Are you sure you want to permanently delete this invoice? The stock will be restored to the inventory.")) return;
+        try {
+            await deleteInvoice(id!).unwrap();
+            toast.success("Invoice successfully deleted");
+            navigate('/billing');
+        } catch (e: any) {
+            toast.error(e.data?.message || "Failed to delete invoice");
+        }
+    }
+
+    // ── Quick visual preview in a popup window ──────────────────────────
+    const handleQuickPreview = () => {
+        const printArea = document.getElementById('invoice-print-area')
+        if (!printArea) return
+
+        const printWindow = window.open('', '_blank', 'width=900,height=700')
+        if (!printWindow) {
+            toast.error('Could not open preview window.')
+            return
+        }
+
+        const stylesheets = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+            .map(el => el.outerHTML)
+            .join('\n')
+
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Invoice - ${invoice?.invoiceNumber || 'Preview'}</title>
+                ${stylesheets}
+                <style>
+                    body {
+                        margin: 0;
+                        padding: 20px;
+                        background: white;
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    }
+                </style>
+            </head>
+            <body>
+                ${printArea.innerHTML}
+                <div style="margin-top: 24px; text-align: center; padding: 16px;">
+                    <button onclick="window.close()" style="
+                        padding: 10px 32px;
+                        background: #6b7280;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-size: 15px;
+                        cursor: pointer;
+                    ">✕ Close Preview</button>
+                </div>
+            </body>
+            </html>
+        `)
+        printWindow.document.close()
+    }
+
+    // ── Save as PDF with dialog ─────────────────────────────────────────
+    const handleSavePDF = async () => {
+        toast.info('Generating PDF...')
+        const result = await saveAsPDF()
+        if (result.success) {
+            toast.success('PDF saved successfully')
+        } else if (result.error !== 'cancelled') {
+            toast.error('Failed to save PDF: ' + result.error)
+        }
+    }
 
     if (isLoading) {
         return <div className="p-8 text-center text-gray-400">Loading invoice...</div>
@@ -118,6 +208,19 @@ const BillingInvoiceDetailPage = () => {
                 <div className="text-center mb-6 border-b pb-4 relative">
                     <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Jattkart</h1>
                     <p className="text-sm text-gray-500 mt-1 font-medium">The best you got for all your groceries</p>
+                    {isAdmin && (
+                        <div className="absolute top-0 right-0 print:hidden">
+                            <Button
+                                label="Delete Invoice"
+                                icon="pi pi-trash"
+                                severity="danger"
+                                size="small"
+                                outlined
+                                loading={deleting}
+                                onClick={handleDeleteInvoice}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* Invoice Meta + Customer */}
@@ -153,12 +256,12 @@ const BillingInvoiceDetailPage = () => {
                                 <th className="text-left p-3 font-semibold text-gray-700">#</th>
                                 <th className="text-left p-3 font-semibold text-gray-700">Item</th>
                                 <th className="text-right p-3 font-semibold text-gray-700">MRP (₹)</th>
-                                <th className="text-right p-3 font-semibold text-gray-700">Our Price (₹)</th>
+                                <th className="text-right p-3 font-semibold text-gray-700">Price (₹)</th>
                                 <th className="text-right p-3 font-semibold text-gray-700">GST%</th>
                                 <th className="text-center p-3 font-semibold text-gray-700">Qty</th>
                                 <th className="text-right p-3 font-semibold text-gray-700">GST Amt (₹)</th>
                                 <th className="text-right p-3 font-semibold text-gray-700">Line Total (₹)</th>
-                                {!isWorker && <th className="text-right p-3 font-semibold text-gray-700">Profit (₹)</th>}
+                                {!isWorker && <th className="text-right p-3 font-semibold text-gray-700 print:hidden">Profit (₹)</th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -175,6 +278,8 @@ const BillingInvoiceDetailPage = () => {
                                                 </span>
                                             )}
                                         </td>
+                                        <td className="p-3 text-right">{(item.mrp || 0).toFixed(2)}</td>
+                                        <td className="p-3 text-right">{(item.price || 0).toFixed(2)}</td>
                                         <td className="p-3 text-right">{(item.gstPercent || 0).toFixed(2)}%</td>
                                         <td className="p-3 text-center">
                                             {item.quantity}
@@ -182,7 +287,7 @@ const BillingInvoiceDetailPage = () => {
                                         </td>
                                         <td className="p-3 text-right">{(item.gstAmount || 0).toFixed(2)}</td>
                                         <td className="p-3 text-right font-semibold">{(item.lineTotal || 0).toFixed(2)}</td>
-                                        {!isWorker && <td className="p-3 text-right font-semibold text-green-600">{(item.profit || 0).toFixed(2)}</td>}
+                                        {!isWorker && <td className="p-3 text-right font-semibold text-green-600 print:hidden">{(item.profit || 0).toFixed(2)}</td>}
                                     </tr>
                                 );
                             })}
@@ -207,7 +312,7 @@ const BillingInvoiceDetailPage = () => {
                                 <td colSpan={isWorker ? 1 : 2} className="p-3 text-right font-bold text-xl text-gray-900">₹ {(invoice.grandTotal || 0).toFixed(2)}</td>
                             </tr>
                             {!isWorker && (
-                                <tr className="border-t border-gray-100 bg-green-50/30">
+                                <tr className="border-t border-gray-100 bg-green-50/30 print:hidden">
                                     <td colSpan={7} className="p-3 text-right font-bold text-green-700 text-sm">Total Profit</td>
                                     <td colSpan={2} className="p-3 text-right font-bold text-lg text-green-700">₹ {(invoice.totalProfit || 0).toFixed(2)}</td>
                                 </tr>
@@ -265,6 +370,22 @@ const BillingInvoiceDetailPage = () => {
                         size="small"
                         outlined
                         onClick={handlePrint}
+                    />
+                    <Button
+                        label="Preview"
+                        icon="pi pi-eye"
+                        size="small"
+                        outlined
+                        severity="info"
+                        onClick={handleQuickPreview}
+                    />
+                    <Button
+                        label="Save as PDF"
+                        icon="pi pi-file-pdf"
+                        size="small"
+                        outlined
+                        severity="danger"
+                        onClick={handleSavePDF}
                     />
                     <Link to="/billing" className="text-blue-600 hover:underline text-sm ml-2">← Dashboard</Link>
                 </div>
