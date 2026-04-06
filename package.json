@@ -67,8 +67,8 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "Jattkart",
-        "repo": "jattkart-pos"
+        "owner": "Harsh-11-04",
+        "repo": "warehouse-management-system"
       }
     ],
     "nsis": {
