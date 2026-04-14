@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { UserSlicePath } from '../../provider/slice/user.slice'
@@ -16,7 +16,7 @@ import {
 } from '../../provider/queries/BillingInvoice.query'
 import { useLazySearchBillingProductsQuery } from '../../provider/queries/BillingProduct.query'
 import { useGetBillingSettingsQuery } from '../../provider/queries/BillingSettings.query'
-import { printInvoice, saveAsPDF } from '../../services/printService'
+import { printInvoice, saveAsPDF, onPrintShortcut } from '../../services/printService'
 
 const BillingInvoiceDetailPage = () => {
     const { id } = useParams<{ id: string }>()
@@ -89,6 +89,7 @@ const BillingInvoiceDetailPage = () => {
                 product: product._id,
                 name: product.name,
                 barcode: product.barcode,
+                mrp: product.mrp || 0,
                 quantity: 1,
                 price: invoice?.customer?.hasCard && product.cardPrice ? product.cardPrice : product.sellingPrice,
                 gstPercent: product.gstPercent || 0
@@ -119,6 +120,14 @@ const BillingInvoiceDetailPage = () => {
             toast.success('Print job sent')
         }
     }
+
+    // ── Ctrl+P → route through custom print pipeline ────────
+    useEffect(() => {
+        const cleanup = onPrintShortcut(() => {
+            if (invoice) handlePrint()
+        })
+        return cleanup
+    }, [invoice, settings])
 
     const handleDeleteInvoice = async () => {
         if (!window.confirm("Are you sure you want to permanently delete this invoice? The stock will be restored to the inventory.")) return;

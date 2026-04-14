@@ -1,6 +1,6 @@
 {
   "name": "jattkart-pos",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Jattkart POS — Desktop Point of Sale System",
   "author": "Harsh Pawar (Harsh-11-04)",
   "license": "ISC",
@@ -38,6 +38,7 @@
         "to": "backend",
         "filter": [
           "**/*",
+          ".env",
           "!scripts/**",
           "!.env.cloud",
           "!.env.shop",

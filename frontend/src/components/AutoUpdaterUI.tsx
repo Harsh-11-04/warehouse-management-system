@@ -1,24 +1,5 @@
 import React, { useEffect, useState } from 'react';
 
-declare global {
-  interface Window {
-    electronAPI: {
-      isElectron: boolean;
-      updater: {
-        check: () => void;
-        install: () => void;
-        onCheckingForUpdate: (callback: () => void) => void;
-        onUpdateAvailable: (callback: (info: any) => void) => void;
-        onUpdateNotAvailable: (callback: (info: any) => void) => void;
-        onError: (callback: (err: string) => void) => void;
-        onDownloadProgress: (callback: (progressObj: any) => void) => void;
-        onUpdateDownloaded: (callback: (info: any) => void) => void;
-        removeListeners: () => void;
-      };
-    };
-  }
-}
-
 const AutoUpdaterUI: React.FC = () => {
     const [isVisible, setIsVisible] = useState(false);
     const [status, setStatus] = useState('');

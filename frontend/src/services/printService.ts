@@ -1,7 +1,10 @@
 /**
  * Print Service — Renderer-side print interface
  * Wraps Electron IPC calls for the unified printing system.
- * Falls back to window.print() in non-Electron environments.
+ *
+ * IMPORTANT: window.print() is NEVER used as fallback inside Electron.
+ * It opens the native Chromium print dialog which shows the raw page HTML
+ * instead of the custom thermal/A4 template — this is the main bug.
  */
 
 interface PrinterInfo {
@@ -23,7 +26,10 @@ interface PrintInvoiceOptions {
     layout?: 'thermal' | 'a4' | 'auto'
 }
 
-const api = (window as any).electronAPI
+const api = window.electronAPI
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+    error instanceof Error ? error.message : fallback
 
 /**
  * Check if running inside Electron.
@@ -49,16 +55,18 @@ export async function getPrinters(): Promise<PrinterInfo[]> {
  * Print an invoice. Auto-detects printer type and uses correct layout.
  * - Thermal → silent auto-print (no dialog)
  * - A4 → PDF preview in system viewer (has its own print button)
+ *
+ * NOTE: No window.print() fallback — it opens the native dialog which
+ * shows the raw page instead of the custom thermal/A4 template.
  */
 export async function printInvoice(
-    invoice: any,
-    settings: any,
+    invoice: unknown,
+    settings: unknown,
     options: PrintInvoiceOptions = {}
 ): Promise<PrintResult> {
     if (!api?.printInvoice) {
-        // Browser fallback
-        window.print()
-        return { success: true }
+        // Not running in Electron — cannot print
+        return { success: false, error: 'Printing is only available in the desktop app' }
     }
 
     try {
@@ -70,8 +78,8 @@ export async function printInvoice(
             layout: options.layout || 'auto',
         })
         return result
-    } catch (err: any) {
-        return { success: false, error: err.message || 'Print failed' }
+    } catch (error: unknown) {
+        return { success: false, error: getErrorMessage(error, 'Print failed') }
     }
 }
 
@@ -81,8 +89,7 @@ export async function printInvoice(
  */
 export async function printPreviewA4(): Promise<PrintResult> {
     if (!api?.printPreview) {
-        window.print()
-        return { success: true }
+        return { success: false, error: 'Preview is only available in the desktop app' }
     }
 
     try {
@@ -91,8 +98,8 @@ export async function printPreviewA4(): Promise<PrintResult> {
             return { success: false, error: result.reason }
         }
         return { success: true }
-    } catch (err: any) {
-        return { success: false, error: err.message || 'Preview failed' }
+    } catch (error: unknown) {
+        return { success: false, error: getErrorMessage(error, 'Preview failed') }
     }
 }
 
@@ -101,8 +108,7 @@ export async function printPreviewA4(): Promise<PrintResult> {
  */
 export async function saveAsPDF(): Promise<PrintResult> {
     if (!api?.savePDF) {
-        window.print()
-        return { success: true }
+        return { success: false, error: 'Save as PDF is only available in the desktop app' }
     }
 
     try {
@@ -110,7 +116,22 @@ export async function saveAsPDF(): Promise<PrintResult> {
         if (result?.success) return { success: true }
         if (result?.reason === 'cancelled') return { success: false, error: 'cancelled' }
         return { success: false, error: result?.reason || 'Save failed' }
-    } catch (err: any) {
-        return { success: false, error: err.message || 'Save failed' }
+    } catch (error: unknown) {
+        return { success: false, error: getErrorMessage(error, 'Save failed') }
+    }
+}
+
+/**
+ * Register the Ctrl+P shortcut listener.
+ * The main process blocks native Ctrl+P and sends 'print:shortcut-pressed'
+ * via IPC. This function lets components register a callback for it.
+ */
+export function onPrintShortcut(callback: () => void): () => void {
+    if (!api?.onPrintShortcut) return () => {}
+    const listenerId = api.onPrintShortcut(callback)
+    return () => {
+        if (typeof listenerId === 'number') {
+            api.removePrintShortcutListener?.(listenerId)
+        }
     }
 }

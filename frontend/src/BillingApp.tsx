@@ -1,7 +1,7 @@
 
 import { Outlet, useNavigate } from 'react-router-dom'
 import BillingLayout from './layout/BillingLayout'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import axios from 'axios'
 import { useDispatch, useSelector } from 'react-redux'
 import { setUser, UserSlicePath } from './provider/slice/user.slice'
@@ -17,7 +17,7 @@ function BillingApp() {
   const dispatch = useDispatch()
   const selector = useSelector(UserSlicePath)
 
-  const fetchUser = async (token: string) => {
+  const fetchUser = useCallback(async (token: string) => {
     try {
       const { data } = await axios.get(import.meta.env.VITE_BACKEND_URL + "/auth/profile", {
         headers: {
@@ -37,7 +37,7 @@ function BillingApp() {
       navigate("/login")
       return
     }
-  }
+  }, [dispatch, navigate])
 
   useEffect(() => {
     const token = localStorage.getItem("token") || ''
@@ -55,7 +55,7 @@ function BillingApp() {
         })()
       }
     }
-  }, [])
+  }, [dispatch, fetchUser, navigate, selector?.email])
 
   const logoutHandler = () => {
     try {

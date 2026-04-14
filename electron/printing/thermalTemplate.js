@@ -42,38 +42,36 @@ function buildThermalReceiptHTML(invoice, settings = {}) {
     const invoiceFooter = settings.invoiceFooter || 'Thank you for your business!'
 
     // Build items rows
+    // NOTE: float:right inside <td> causes text overlap on thermal printers.
+    // Using a two-cell <tr> with text-align:right instead.
     const itemsHTML = (invoice.items || []).map((item, idx) => {
         const qty = item.quantity || 1
         const price = item.price || 0
         const lineTotal = item.lineTotal || (price * qty)
-        const name = (item.name || 'Item').substring(0, 24) // truncate long names
+        const name = (item.name || 'Item').substring(0, 22) // keep short for 80mm roll
         const returnedQty = item.returnedQuantity || 0
-        const returnNote = returnedQty > 0 ? `\n  <span style="font-size:10px;color:#555;">(Rtn: ${returnedQty})</span>` : ''
+        const returnNote = returnedQty > 0 ? ` <span style="font-size:10px;">(Rtn:${returnedQty})</span>` : ''
 
         return `
         <tr>
-            <td style="padding:2px 0;vertical-align:top;font-size:12px;">
+            <td colspan="2" style="padding:2px 0;vertical-align:top;font-size:12px;">
                 ${idx + 1}. ${name}${returnNote}
             </td>
         </tr>
         <tr>
-            <td style="padding:0 0 4px 12px;font-size:12px;">
-                <span>${qty} x ${formatCurrency(price, currencySymbol)}</span>
-                <span style="float:right;font-weight:bold;">${formatCurrency(lineTotal, currencySymbol)}</span>
-            </td>
+            <td style="padding:0 0 6px 12px;font-size:12px;">${qty} x ${formatCurrency(price, currencySymbol)}</td>
+            <td style="padding:0 0 6px;font-size:12px;font-weight:bold;text-align:right;">${formatCurrency(lineTotal, currencySymbol)}</td>
         </tr>`
     }).join('')
 
-    // Discount info
+    // Discount info — use two cells, no float
     let discountHTML = ''
     if (invoice.discount && invoice.discount > 0) {
-        const discLabel = invoice.discountType === 'percent' ? 'Discount (%)' : 'Discount'
+        const discLabel = invoice.discountType === 'percent' ? 'Discount(%)' : 'Discount'
         discountHTML = `
         <tr>
-            <td style="padding:2px 0;font-size:12px;">
-                <span>${discLabel}</span>
-                <span style="float:right;">-${formatCurrency(invoice.discount, currencySymbol)}</span>
-            </td>
+            <td style="padding:2px 0;font-size:12px;">${discLabel}</td>
+            <td style="padding:2px 0;font-size:12px;text-align:right;">-${formatCurrency(invoice.discount, currencySymbol)}</td>
         </tr>`
     }
 
@@ -89,27 +87,36 @@ function buildThermalReceiptHTML(invoice, settings = {}) {
             box-sizing: border-box;
         }
         @page {
+            /* 80mm wide, auto height — thermal printer feeds until end of content */
             size: 80mm auto;
             margin: 0;
         }
         body {
-            width: 80mm;
-            max-width: 80mm;
-            margin: 0;
-            padding: 4mm 3mm;
-            font-family: 'Consolas', 'Courier New', 'Lucida Console', monospace;
+            /* 76mm = 80mm roll minus 2mm each side for safe print zone */
+            width: 76mm;
+            max-width: 76mm;
+            margin: 0 auto;
+            padding: 3mm 0;
+            font-family: 'Courier New', 'Lucida Console', monospace;
             font-size: 12px;
+            line-height: 1.4;
             color: #000;
             background: #fff;
             -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
         table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed; /* prevent columns from overflowing */
+        }
+        td {
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
         .divider {
             border-top: 1px dashed #000;
-            margin: 6px 0;
+            margin: 5px 0;
         }
         .center {
             text-align: center;
@@ -118,9 +125,9 @@ function buildThermalReceiptHTML(invoice, settings = {}) {
             font-weight: bold;
         }
         .grand-total {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
-            padding: 4px 0;
+            padding: 3px 0;
         }
     </style>
 </head>
@@ -169,33 +176,27 @@ function buildThermalReceiptHTML(invoice, settings = {}) {
 
     <div class="divider"></div>
 
-    <!-- Totals -->
+    <!-- Totals — two-column table, no floats -->
     <table>
         <tr>
-            <td style="padding:2px 0;font-size:12px;">
-                <span>Subtotal</span>
-                <span style="float:right;">${formatCurrency(invoice.subtotal, currencySymbol)}</span>
-            </td>
+            <td style="padding:2px 0;font-size:12px;">Subtotal</td>
+            <td style="padding:2px 0;font-size:12px;text-align:right;">${formatCurrency(invoice.subtotal, currencySymbol)}</td>
         </tr>
         ${(invoice.totalGst && invoice.totalGst > 0) ? `
         <tr>
-            <td style="padding:2px 0;font-size:12px;">
-                <span>GST</span>
-                <span style="float:right;">${formatCurrency(invoice.totalGst, currencySymbol)}</span>
-            </td>
+            <td style="padding:2px 0;font-size:12px;">GST</td>
+            <td style="padding:2px 0;font-size:12px;text-align:right;">${formatCurrency(invoice.totalGst, currencySymbol)}</td>
         </tr>` : ''}
         ${discountHTML}
     </table>
 
     <div style="border-top:2px solid #000;margin:4px 0;"></div>
 
-    <!-- Grand Total -->
+    <!-- Grand Total — two cells, no float -->
     <table>
         <tr>
-            <td class="grand-total">
-                <span>TOTAL</span>
-                <span style="float:right;">${formatCurrency(invoice.grandTotal, currencySymbol)}</span>
-            </td>
+            <td class="grand-total">TOTAL</td>
+            <td class="grand-total" style="text-align:right;">${formatCurrency(invoice.grandTotal, currencySymbol)}</td>
         </tr>
     </table>
 

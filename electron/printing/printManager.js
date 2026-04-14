@@ -2,12 +2,33 @@
  * Print Manager — Core Orchestrator
  * Creates a hidden BrowserWindow, loads the correct HTML template,
  * and sends the print job using webContents.print().
+ *
+ * FIX: encodeURIComponent corrupts ₹ and multi-byte Unicode characters.
+ *      Using base64 data URI instead for reliable Unicode rendering.
+ * FIX: Window width must exactly match 80mm @ 96dpi = 302px for thermal.
+ * FIX: Page height set to 1200mm (tall enough for any receipt) — printer
+ *      auto-cuts; a small value like 297mm compresses content into a box.
+ * FIX: Render delay increased to 800ms to ensure monospace fonts are fully
+ *      laid out before the print pipeline fires.
  */
 
 const { BrowserWindow } = require('electron')
 const { detectPrinterType } = require('./printerUtils')
 const { buildThermalReceiptHTML } = require('./thermalTemplate')
 const { buildA4InvoiceHTML } = require('./a4Template')
+
+// 80mm at 96 DPI = 302px exactly. Chromium renders at 96dpi.
+const THERMAL_WINDOW_WIDTH = 302
+
+/**
+ * Encode HTML as a base64 data URI so Unicode chars (₹, etc.) are never corrupted.
+ * @param {string} html
+ * @returns {string} data URI
+ */
+function htmlToDataUri(html) {
+    const base64 = Buffer.from(html, 'utf8').toString('base64')
+    return `data:text/html;base64,${base64}`
+}
 
 /**
  * Print an invoice.
@@ -38,29 +59,34 @@ async function printInvoice({ invoice, settings, printerName, silent, layout }) 
             const isSilent = silent !== undefined ? silent : (printerType === 'thermal')
 
             // Create hidden window
+            // Thermal: width = exactly 80mm @ 96dpi (302px)
+            // A4:      standard 800px
             const printWindow = new BrowserWindow({
                 show: false,
-                width: printerType === 'thermal' ? 310 : 800,
-                height: printerType === 'thermal' ? 900 : 1100,
+                width: printerType === 'thermal' ? THERMAL_WINDOW_WIDTH : 800,
+                height: printerType === 'thermal' ? 1200 : 1100,
                 webPreferences: {
                     nodeIntegration: false,
-                    contextIsolation: true,
-                    javascript: false    // no JS needed, pure HTML
+                    contextIsolation: true
+                    // NOTE: javascript must be enabled (default) so layout engine
+                    // completes — disabling it can freeze the rendering pipeline.
                 }
             })
 
-            // Timeout safety — destroy window after 15 seconds no matter what
+            // Timeout safety — destroy window after 20 seconds no matter what
             const safetyTimeout = setTimeout(() => {
                 try { if (!printWindow.isDestroyed()) printWindow.destroy() } catch (_) {}
-                resolve({ success: false, error: 'Print timed out after 15 seconds' })
-            }, 15000)
+                resolve({ success: false, error: 'Print timed out after 20 seconds' })
+            }, 20000)
 
-            // Load HTML content
-            const encodedHtml = encodeURIComponent(html)
-            printWindow.loadURL(`data:text/html;charset=utf-8,${encodedHtml}`)
+            // ── KEY FIX: use base64 data URI instead of encodeURIComponent ──
+            // encodeURIComponent breaks ₹ and other multi-byte chars.
+            const dataUri = htmlToDataUri(html)
+            printWindow.loadURL(dataUri)
 
             printWindow.webContents.on('did-finish-load', () => {
-                // Small delay to let the renderer paint
+                // ── KEY FIX: 800ms delay ──
+                // 300ms is not enough for monospace font shaping + float layout.
                 setTimeout(() => {
                     // Build print options
                     const printOptions = {
@@ -68,17 +94,20 @@ async function printInvoice({ invoice, settings, printerName, silent, layout }) 
                         printBackground: printerType === 'a4',
                         color: printerType === 'a4',
                         margins: {
-                            marginType: printerType === 'thermal' ? 'none' : 'printableArea'
+                            marginType: 'none'   // always none — CSS padding handles spacing
                         },
-                        scaleFactor: 100,   // No scaling!
+                        scaleFactor: 100,   // No scaling — 1:1 pixel mapping
                     }
 
                     // Set page size
                     if (printerType === 'thermal') {
-                        // 80mm width in microns = 80000, height large enough for auto-cut
+                        // ── KEY FIX: page height ──
+                        // 297mm compressed a multi-item receipt into a tiny block.
+                        // 1200mm is tall enough for any receipt; printer auto-cuts.
+                        // Width = 80mm in microns (80000)
                         printOptions.pageSize = {
                             width: 80000,
-                            height: 297000  // ~297mm, printer will auto-cut
+                            height: 1200000  // 1200mm — thermal printer will auto-cut
                         }
                     } else {
                         printOptions.pageSize = 'A4'
@@ -106,7 +135,7 @@ async function printInvoice({ invoice, settings, printerName, silent, layout }) 
                             })
                         }
                     })
-                }, 300)
+                }, 800)  // 800ms — enough for full monospace font layout
             })
 
             printWindow.webContents.on('did-fail-load', (_event, errorCode, errorDesc) => {

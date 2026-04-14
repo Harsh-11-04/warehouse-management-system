@@ -3,7 +3,7 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import Header from './components/Header'
 import MainLayout from './layout/MainLayout'
 import AutoUpdaterUI from './components/AutoUpdaterUI'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import axios from 'axios'
 import { useDispatch, useSelector } from 'react-redux'
 import { removeUser, setUser, UserSlicePath } from './provider/slice/user.slice'
@@ -15,16 +15,14 @@ function App() {
 
 
 
-  const fetchUser = async (token: string) => {
+  const fetchUser = useCallback(async (token: string) => {
     try {
-
       const { data } = await axios.get(import.meta.env.VITE_BACKEND_URL + "/auth/profile", {
         headers: {
           'Authorization': 'Bearer ' + token
         }
       })
 
-      console.log(data.user);
       dispatch(setUser({
         ...data.user,
         shop: data.shop || null
@@ -40,8 +38,7 @@ function App() {
       navigate("/login")
       return
     }
-
-  }
+  }, [dispatch, navigate])
   useEffect(() => {
     const token = localStorage.getItem("token") || ''
 
@@ -62,7 +59,7 @@ function App() {
       }
     }
 
-  }, [])
+  }, [dispatch, fetchUser, navigate, selector?.email])
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-700">loading....</div>
   }

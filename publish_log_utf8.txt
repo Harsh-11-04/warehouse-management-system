@@ -1,0 +1,122 @@
+﻿
+> jattkart-pos@1.0.2 publish
+> npm run clean && npm run frontend:build && electron-builder --win -p always
+
+
+> jattkart-pos@1.0.2 clean
+> npx rimraf dist-electron
+
+
+> jattkart-pos@1.0.2 frontend:build
+> cd frontend && set VITE_BACKEND_URL=http://127.0.0.1:4000/api/v1&& npm run build
+
+
+> frontend@0.0.0 build
+> tsc && node node_modules/vite/bin/vite.js build
+
+[36mvite v5.2.11 [32mbuilding for production...[36m[39m
+transforming...
+node.exe : Browserslist: caniuse-lite is 
+outdated. Please run:
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" 
+"C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : 
+NotSpecified:     (Browserslist: c...ed. 
+Please run::Str    ing) [], 
+RemoteException
+    + FullyQualifiedErrorId : 
+NativeCommand    Error
+ 
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https:/
+/github.com/browserslist/update-db#readme
+[32mΓ£ô[39m 942 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist/[22m[32mindex.html                              [39m[1m[2m    0.91 kB[22m[1m[22m[2m Γöé gzip:   0.48 kB[22m
+[2mdist/[22m[32massets/primeicons-C6QP2o4f.woff2        [39m[1m[2m   35.15 kB[22m[1m[22m
+[2mdist/[22m[32massets/primeicons-MpK4pl85.ttf          [39m[1m[2m   84.98 kB[22m[1m[22m
+[2mdist/[22m[32massets/primeicons-WjwUDZjB.woff         [39m[1m[2m   85.06 kB[22m[1m[22m
+[2mdist/[22m[32massets/primeicons-DMOk5skT.eot          [39m[1m[2m   85.16 kB[22m[1m[22m
+[2mdist/[22m[32massets/Inter-roman.var-C-r5W2Hj.woff2   [39m[1m[2m  227.18 kB[22m[1m[22m
+[2mdist/[22m[32massets/Inter-italic.var-DhD-tpjY.woff2  [39m[1m[2m  245.04 kB[22m[1m[22m
+[2mdist/[22m[32massets/primeicons-Dr5RGzOO.svg          [39m[1m[2m  342.53 kB[22m[1m[22m[2m Γöé gzip: 105.26 kB[22m
+[2mdist/[22m[35massets/index-ApdryIs5.css               [39m[1m[2m  238.59 kB[22m[1m[22m[2m Γöé gzip:  30.08 kB[22m
+[2mdist/[22m[36massets/auto-GcItVELB.js                 [39m[1m[2m    1.22 kB[22m[1m[22m[2m Γöé gzip:   0.59 kB[22m
+[2mdist/[22m[36massets/purify.es-DmrQBWoP.js            [39m[1m[2m   21.98 kB[22m[1m[22m[2m Γöé gzip:   8.74 kB[22m
+[2mdist/[22m[36massets/index.es-D0mCzvsZ.js             [39m[1m[2m  149.64 kB[22m[1m[22m[2m Γöé gzip:  51.11 kB[22m
+[2mdist/[22m[36massets/index-C4T63i1f.js                [39m[1m[33m2,332.48 kB[39m[22m[2m Γöé gzip: 690.74 kB[22m
+[33m
+(!) Some chunks are larger than 500 kB 
+after minification. Consider:
+- Using dynamic import() to code-split 
+the application
+- Use 
+build.rollupOptions.output.manualChunks 
+to improve chunking: https://rollupjs.org
+/configuration-options/#output-manualchun
+ks
+- Adjust chunk size limit for this 
+warning via 
+build.chunkSizeWarningLimit.[39m
+[32mΓ£ô built in 15.88s[39m
+  ΓÇó electron-builder  version=25.1.8 os=10.0.26200
+  ΓÇó loaded configuration  file=package.json ("build" field)
+  ΓÇó executing @electron/rebuild  electronVersion=33.4.11 arch=x64 buildFromSource=false appDir=./
+  ΓÇó installing native dependencies  arch=x64
+  ΓÇó completed installing native dependencies
+  ΓÇó packaging       platform=win32 arch=x64 electron=33.4.11 appOutDir=dist-electron\win-unpacked
+  ΓÇó asar usage is disabled ΓÇö this is strongly not recommended  solution=enable asar and use asarUnpack to unpack files that must be externally available
+  ΓÇó signing with signtool.exe  path=dist-electron\win-unpacked\resources\backend\node_modules\nodemon\bin\windows-kill.exe
+  ΓÇó no signing info identified, signing is skipped  signHook=false cscInfo=null
+  ΓÇó asar usage is disabled ΓÇö this is strongly not recommended  solution=enable asar and use asarUnpack to unpack files that must be externally available
+  ΓÇó signing with signtool.exe  path=dist-electron\win-unpacked\Jattkart POS.exe
+  ΓÇó no signing info identified, signing is skipped  signHook=false cscInfo=null
+  ΓÇó building        target=nsis file=dist-electron\jattkart-pos-setup-1.0.2.exe archs=x64 oneClick=false perMachine=false
+  ΓÇó signing with signtool.exe  path=dist-electron\win-unpacked\resources\elevate.exe
+  ΓÇó no signing info identified, signing is skipped  signHook=false cscInfo=null
+  ΓÇó signing with signtool.exe  path=dist-electron\__uninstaller-nsis-jattkart-pos.exe
+  ΓÇó no signing info identified, signing is skipped  signHook=false cscInfo=null
+  ΓÇó signing with signtool.exe  path=dist-electron\jattkart-pos-setup-1.0.2.exe
+  ΓÇó no signing info identified, signing is skipped  signHook=false cscInfo=null
+  ΓÇó building block map  blockMapFile=dist-electron\jattkart-pos-setup-1.0.2.exe.blockmap
+  Γ¿» Cannot cleanup: 
+
+Error #1 --------------------------------------------------------------------------------
+Error: GitHub Personal Access Token is not set, neither programmatically, nor using env "GH_TOKEN"
+    at new GitHubPublisher (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\electron-publish\src\gitHubPublisher.ts:51:15)
+    at createPublisher (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\app-builder-lib\src\publish\PublishManager.ts:302:14)
+    at PublishManager.getOrCreatePublisher (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\app-builder-lib\src\publish\PublishManager.ts:221:19)
+    at PublishManager.scheduleUpload (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\app-builder-lib\src\publish\PublishManager.ts:151:28)
+    at PublishManager.artifactCreatedWithoutExplicitPublishConfig (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\app-builder-lib\src\publish\PublishManager.ts:201:14)
+
+Error #2 --------------------------------------------------------------------------------
+Error: GitHub Personal Access Token is not set, neither programmatically, nor using env "GH_TOKEN"
+    at new GitHubPublisher (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\electron-publish\src\gitHubPublisher.ts:51:15)
+    at createPublisher (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\app-builder-lib\src\publish\PublishManager.ts:302:14)
+    at PublishManager.getOrCreatePublisher (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\app-builder-lib\src\publish\PublishManager.ts:221:19)
+    at PublishManager.scheduleUpload (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\app-builder-lib\src\publish\PublishManager.ts:151:28)
+    at PublishManager.artifactCreatedWithoutExplicitPublishConfig (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\app-builder-lib\src\publish\PublishManager.ts:201:14)  failedTask=build stackTrace=Error: Cannot cleanup: 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            Error #1 --------------------------------------------------------------------------------
+Error: GitHub Personal Access Token is not set, neither programmatically, nor using env "GH_TOKEN"
+    at new GitHubPublisher (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\electron-publish\src\gitHubPublisher.ts:51:15)
+    at createPublisher (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\app-builder-lib\src\publish\PublishManager.ts:302:14)
+    at PublishManager.getOrCreatePublisher (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\app-builder-lib\src\publish\PublishManager.ts:221:19)
+    at PublishManager.scheduleUpload (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\app-builder-lib\src\publish\PublishManager.ts:151:28)
+    at PublishManager.artifactCreatedWithoutExplicitPublishConfig (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\app-builder-lib\src\publish\PublishManager.ts:201:14)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            Error #2 --------------------------------------------------------------------------------
+Error: GitHub Personal Access Token is not set, neither programmatically, nor using env "GH_TOKEN"
+    at new GitHubPublisher (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\electron-publish\src\gitHubPublisher.ts:51:15)
+    at createPublisher (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\app-builder-lib\src\publish\PublishManager.ts:302:14)
+    at PublishManager.getOrCreatePublisher (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\app-builder-lib\src\publish\PublishManager.ts:221:19)
+    at PublishManager.scheduleUpload (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\app-builder-lib\src\publish\PublishManager.ts:151:28)
+    at PublishManager.artifactCreatedWithoutExplicitPublishConfig (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\app-builder-lib\src\publish\PublishManager.ts:201:14)
+    at throwError (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\builder-util\src\asyncTaskManager.ts:88:11)
+    at checkErrors (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\builder-util\src\asyncTaskManager.ts:53:9)
+    at AsyncTaskManager.awaitTasks (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\builder-util\src\asyncTaskManager.ts:58:5)
+    at PublishManager.awaitTasks (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\app-builder-lib\src\publish\PublishManager.ts:235:28)
+    at C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\app-builder-lib\src\index.ts:133:32
+    at executeFinally (C:\Users\harsh\Desktop\warehouse_management_system\warehouse-management-system\node_modules\builder-util\src\promise.ts:23:9)

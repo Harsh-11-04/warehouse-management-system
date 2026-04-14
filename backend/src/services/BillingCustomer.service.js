@@ -1,6 +1,13 @@
 const BillingCustomer = require("../models/BillingCustomer.models")
 const ActivityLogService = require("./ActivityLog.service")
 const SyncService = require("./Sync.service")
+const ShopUtils = require("../utils/ShopUtils")
+const escapeRegex = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const normalizePagination = (page = 1, limit = 20, maxLimit = 100) => {
+    const safePage = Math.max(Number.parseInt(page, 10) || 1, 1)
+    const safeLimit = Math.min(Math.max(Number.parseInt(limit, 10) || 20, 1), maxLimit)
+    return { page: safePage, limit: safeLimit }
+}
 
 class BillingCustomerService {
     static buildCustomerSyncPayload(customer) {
@@ -34,40 +41,47 @@ class BillingCustomerService {
     }
 
     static async getAll(userId, { page = 1, limit = 20, query = '' }) {
-        const filter = { user: userId, isActive: true }
-        if (query) {
+        const pagination = normalizePagination(page, limit)
+        const userIds = await ShopUtils.getShopUserIds(userId)
+        const filter = { user: { $in: userIds }, isActive: true }
+        const escapedQuery = query ? escapeRegex(query.trim()) : ''
+        if (escapedQuery) {
             filter.$or = [
-                { name: { $regex: query, $options: 'i' } },
-                { phone: { $regex: query, $options: 'i' } },
-                { email: { $regex: query, $options: 'i' } }
+                { name: { $regex: escapedQuery, $options: 'i' } },
+                { phone: { $regex: escapedQuery, $options: 'i' } },
+                { email: { $regex: escapedQuery, $options: 'i' } }
             ]
         }
-        const skip = (page - 1) * limit
+        const skip = (pagination.page - 1) * pagination.limit
         const [customers, total] = await Promise.all([
-            BillingCustomer.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+            BillingCustomer.find(filter).sort({ createdAt: -1 }).skip(skip).limit(pagination.limit),
             BillingCustomer.countDocuments(filter)
         ])
-        return { customers, total, page, totalPages: Math.ceil(total / limit) }
+        return { customers, total, page: pagination.page, totalPages: Math.ceil(total / pagination.limit) || 1 }
     }
 
     static async getById(userId, id) {
-        return BillingCustomer.findOne({ _id: id, user: userId })
+        const userIds = await ShopUtils.getShopUserIds(userId)
+        return BillingCustomer.findOne({ _id: id, user: { $in: userIds } })
     }
 
     static async search(userId, query) {
-        const filter = { user: userId, isActive: true }
-        if (query) {
+        const userIds = await ShopUtils.getShopUserIds(userId)
+        const filter = { user: { $in: userIds }, isActive: true }
+        const escapedQuery = query ? escapeRegex(query.trim()) : ''
+        if (escapedQuery) {
             filter.$or = [
-                { name: { $regex: query, $options: 'i' } },
-                { phone: { $regex: query, $options: 'i' } }
+                { name: { $regex: escapedQuery, $options: 'i' } },
+                { phone: { $regex: escapedQuery, $options: 'i' } }
             ]
         }
         return BillingCustomer.find(filter).limit(10).select('name phone email hasCard')
     }
 
     static async update(userId, id, data) {
+        const userIds = await ShopUtils.getShopUserIds(userId)
         const customer = await BillingCustomer.findOneAndUpdate(
-            { _id: id, user: userId },
+            { _id: id, user: { $in: userIds } },
             { $set: data },
             { new: true, runValidators: true }
         )
@@ -87,8 +101,9 @@ class BillingCustomerService {
     }
 
     static async delete(userId, id) {
+        const userIds = await ShopUtils.getShopUserIds(userId)
         const customer = await BillingCustomer.findOneAndUpdate(
-            { _id: id, user: userId },
+            { _id: id, user: { $in: userIds } },
             { $set: { isActive: false } },
             { new: true }
         )

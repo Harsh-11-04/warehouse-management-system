@@ -171,6 +171,7 @@ const BillingDashboardPage = () => {
     const localStats = localStatsData?.stats ?? EMPTY_LOCAL_STATS
     const invoices = invoiceData?.invoices ?? EMPTY_INVOICES
     const totalInvoices = localStatsData?.totalInvoices ?? 0
+    const totalInvoicePages = Math.max(invoiceData?.totalPages ?? 1, 1)
     const dailyRows = dailyRevenue?.rows ?? EMPTY_DAILY_ROWS
     const monthlyRows = monthlyRevenue?.rows ?? EMPTY_MONTHLY_ROWS
     const bestSellerRows = bestSellers?.rows ?? EMPTY_BEST_SELLERS
@@ -743,14 +744,26 @@ const BillingDashboardPage = () => {
 
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
                 <div className="flex items-center justify-between mb-3 text-xs text-gray-500">
-                    <span>Page {page} - {invoiceData?.total || 0} invoice(s)</span>
+                    <span>Page {page} of {totalInvoicePages} - {invoiceData?.total || 0} invoice(s)</span>
                     <div className="flex gap-1">
-                        {page > 1 && (
-                            <Button icon="pi pi-chevron-left" rounded size="small" text onClick={() => goToPage(page - 1)} />
-                        )}
-                        {invoiceData && page < invoiceData.totalPages && (
-                            <Button icon="pi pi-chevron-right" rounded size="small" text onClick={() => goToPage(page + 1)} />
-                        )}
+                        <Button
+                            icon="pi pi-chevron-left"
+                            rounded
+                            size="small"
+                            text
+                            disabled={page <= 1}
+                            onClick={() => goToPage(page - 1)}
+                            aria-label="Previous page"
+                        />
+                        <Button
+                            icon="pi pi-chevron-right"
+                            rounded
+                            size="small"
+                            text
+                            disabled={page >= totalInvoicePages}
+                            onClick={() => goToPage(page + 1)}
+                            aria-label="Next page"
+                        />
                     </div>
                 </div>
 

@@ -208,6 +208,8 @@ function createSplashWindow() {
 }
 
 function createMainWindow() {
+    const loadURL = `http://127.0.0.1:${BACKEND_PORT}`
+
     mainWindow = new BrowserWindow({
         width: 1280,
         height: 800,
@@ -227,6 +229,14 @@ function createMainWindow() {
     // Allow window.open() popups (used for print preview)
     mainWindow.webContents.setWindowOpenHandler(({ url, features }) => {
         log(`window.open requested: url="${url}" features="${features}"`)
+
+        if (url && url !== 'about:blank' && !url.startsWith(loadURL)) {
+            if (/^https?:\/\//i.test(url)) {
+                shell.openExternal(url)
+            }
+            return { action: 'deny' }
+        }
+
         return {
             action: 'allow',
             overrideBrowserWindowOptions: {
@@ -242,10 +252,31 @@ function createMainWindow() {
         }
     })
 
+    mainWindow.webContents.on('will-navigate', (event, url) => {
+        if (url === loadURL || url.startsWith(`${loadURL}/`)) {
+            return
+        }
+
+        event.preventDefault()
+        if (/^https?:\/\//i.test(url)) {
+            shell.openExternal(url)
+        }
+    })
+
     // In production, backend serves static frontend files
-    const loadURL = `http://127.0.0.1:${BACKEND_PORT}`
     log(`Loading main window: ${loadURL}`)
     mainWindow.loadURL(loadURL)
+
+    // ── Block native Ctrl+P / Cmd+P ────────────────────────────────
+    // The native print dialog shows the raw page HTML instead of the
+    // custom thermal/A4 template.  Intercept the shortcut and send an
+    // IPC event so the renderer can route through printService instead.
+    mainWindow.webContents.on('before-input-event', (_event, input) => {
+        if ((input.control || input.meta) && input.key.toLowerCase() === 'p') {
+            _event.preventDefault()
+            mainWindow.webContents.send('print:shortcut-pressed')
+        }
+    })
 
     mainWindow.webContents.once('did-finish-load', () => {
         if (splashWindow && !splashWindow.isDestroyed()) {
@@ -361,7 +392,7 @@ function setupAutoUpdater() {
 
 // ─── Print Handlers ─────────────────────────────────────────
 const { printInvoice } = require('./printing/printManager')
-const { simplifyPrinterList } = require('./printing/printerUtils')
+const { simplifyPrinterList, getDefaultPrinter, detectPrinterType } = require('./printing/printerUtils')
 
 function setupPrintHandlers() {
     // ── print:invoice ──────────────────────────────────────────
@@ -370,7 +401,29 @@ function setupPrintHandlers() {
     ipcMain.handle('print:invoice', async (_event, { invoice, settings, printerName, silent, layout }) => {
         try {
             log(`print:invoice — printer="${printerName || 'default'}" layout="${layout || 'auto'}" silent=${silent}`)
-            const result = await printInvoice({ invoice, settings, printerName, silent, layout })
+            let resolvedPrinterName = printerName || ''
+            let resolvedLayout = layout || 'auto'
+
+            if (mainWindow && resolvedLayout === 'auto' && !resolvedPrinterName) {
+                const printers = await mainWindow.webContents.getPrintersAsync()
+                const defaultPrinter = getDefaultPrinter(printers)
+
+                if (defaultPrinter?.name) {
+                    resolvedPrinterName = defaultPrinter.name
+                    resolvedLayout = detectPrinterType(defaultPrinter.name)
+                } else {
+                    resolvedLayout = 'a4'
+                }
+            }
+
+            log(`print:invoice â€” printer="${resolvedPrinterName || 'default'}" layout="${resolvedLayout}" silent=${silent}`)
+            const result = await printInvoice({
+                invoice,
+                settings,
+                printerName: resolvedPrinterName,
+                silent,
+                layout: resolvedLayout
+            })
             if (!result.success) {
                 log(`print:invoice failed: ${result.error}`)
             } else {

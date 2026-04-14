@@ -1,0 +1,56 @@
+[
+  {
+    "collection": "consumers",
+    "document": {
+      "_id": "699e9ffcc605d9166d41a669",
+      "user": "699dfec5e5b48fb76f7188e8",
+      "name": "Harsh Pawar",
+      "email": "harshpawar458@gmail.com",
+      "mobile": "9554430033",
+      "dob": "2004-09-10T18:30:00.000Z",
+      "address": "Lovely Professional",
+      "isActive": true,
+      "createdAt": "2026-02-25T07:08:44.837Z",
+      "updatedAt": "2026-02-25T07:09:29.485Z",
+      "__v": 0
+    }
+  },
+  {
+    "collection": "products",
+    "document": {
+      "_id": "699e00a1b8970020a5652d6b",
+      "user": "699dfec5e5b48fb76f7188e8",
+      "name": "Industrial Safety Gloves",
+      "sku": "ISG-007",
+      "category": "Safety",
+      "price": 599,
+      "totalQuantity": 200,
+      "reorderThreshold": 30,
+      "status": "Active",
+      "__v": 0,
+      "createdAt": "2026-02-24T19:48:49.514Z",
+      "updatedAt": "2026-02-24T19:48:49.514Z"
+    }
+  },
+  {
+    "collection": "billingproducts",
+    "document": {
+      "_id": "69b845c7a9f9848c0114033a",
+      "user": "69b8456d30185e38b5a34d96",
+      "barcode": "9000000000003",
+      "name": "Safety Gloves Pack",
+      "category": "Accessories",
+      "purchasePrice": 150,
+      "mrp": 250,
+      "sellingPrice": 200,
+      "cardPrice": 190,
+      "gstPercent": 18,
+      "stock": 54,
+      "lowStockThreshold": 5,
+      "isActive": true,
+      "createdAt": "2026-03-16T18:02:47.958Z",
+      "updatedAt": "2026-03-16T18:14:20.145Z",
+      "__v": 0
+    }
+  }
+]

@@ -1,4 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron')
+let printShortcutListenerId = 0
+const printShortcutListeners = new Map()
 
 contextBridge.exposeInMainWorld('electronAPI', {
     isElectron: true,
@@ -13,6 +15,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
     printInvoice: (data) => ipcRenderer.invoke('print:invoice', data),
     // Returns list of available printers with thermal detection
     getPrinters: () => ipcRenderer.invoke('print:get-printers'),
+    // ── Ctrl+P shortcut interceptor ──────────────────────────────
+    // Fired when Ctrl+P is pressed — renderer should route through printService
+    onPrintShortcut: (callback) => {
+        const listenerId = ++printShortcutListenerId
+        const listener = () => callback()
+        printShortcutListeners.set(listenerId, listener)
+        ipcRenderer.on('print:shortcut-pressed', listener)
+        return listenerId
+    },
+    removePrintShortcutListener: (listenerId) => {
+        const listener = printShortcutListeners.get(listenerId)
+        if (!listener) return
+        ipcRenderer.removeListener('print:shortcut-pressed', listener)
+        printShortcutListeners.delete(listenerId)
+    },
     // ── Legacy print handlers (kept for backward compat) ────────
     // Renders page to PDF → opens in system PDF viewer (full preview + print)
     printPreview: (options) => ipcRenderer.invoke('print:preview', options),

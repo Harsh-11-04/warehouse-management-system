@@ -2,24 +2,35 @@ const express = require("express")
 const cors = require("cors")
 const morgan = require("morgan")
 const path = require("path")
-// const { generalLimiter, authLimiter, stockLimiter, reportLimiter } = require("./middlewares/rateLimit.middleware")
+const { generalLimiter, authLimiter, reportLimiter } = require("./middlewares/rateLimit.middleware")
 const ApiError = require("./utils/ApiError")
 const ErrorHandling = require("./middlewares/ErrorHandler")
+const sanitizeRequest = require("./middlewares/SanitizeRequest")
 
 const app = express()
+const isElectronMode = process.env.ELECTRON_MODE === "true"
 
 app.use(cors())
 app.use(morgan("dev"))
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: false }))
+app.disable("x-powered-by")
 
-// Apply rate limiting - temporarily disabled for testing
-// app.use(generalLimiter)
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff')
+    res.setHeader('X-Frame-Options', 'DENY')
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin')
+    next()
+})
 
-// Specific rate limiting for different routes - temporarily disabled
-// app.use('/api/v1/auth', authLimiter)
-// app.use('/api/v1/stock', stockLimiter)
-// app.use('/api/v1/report', reportLimiter)
+app.use(sanitizeRequest)
+
+app.use('/api/v1/auth', authLimiter)
+if (!isElectronMode) {
+    app.use('/api/v1/report', reportLimiter)
+    app.use('/api/v1', generalLimiter)
+}
 
 // ─── Health check endpoint (used by Electron for readiness polling) ───
 app.get("/api/v1/health", (req, res) => {

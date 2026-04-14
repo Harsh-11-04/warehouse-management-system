@@ -4,8 +4,14 @@ const BillingInvoice = require("../models/BillingInvoice.models")
 const BillingProduct = require("../models/BillingProduct.models")
 const BillingCustomer = require("../models/BillingCustomer.models")
 const ActivityLogService = require("./ActivityLog.service")
-const SyncService = require("./Sync.service")
+let SyncService = null
+try {
+    SyncService = require("./Sync.service")
+} catch (_err) {
+    SyncService = null
+}
 const ApiError = require("../utils/ApiError")
+const ShopUtils = require("../utils/ShopUtils")
 
 const NON_TRANSACTIONAL_MONGO_ERRORS = [
     "Transaction numbers are only allowed on a replica set member or mongos",
@@ -36,6 +42,24 @@ const buildProductMap = (products) => {
 }
 
 const withOptionalSession = (query, session) => (session ? query.session(session) : query)
+const escapeRegex = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const enqueueManySafely = async (userId, events, options = {}) => {
+    if (!SyncService || typeof SyncService.enqueueMany !== 'function') {
+        return
+    }
+    await SyncService.enqueueMany(userId, events, options)
+}
+const enqueueSafely = async (userId, event, options = {}) => {
+    if (!SyncService || typeof SyncService.enqueue !== 'function') {
+        return
+    }
+    await SyncService.enqueue(userId, event, options)
+}
+const normalizePagination = (page = 1, limit = 20, maxLimit = 100) => {
+    const safePage = Math.max(Number.parseInt(page, 10) || 1, 1)
+    const safeLimit = Math.min(Math.max(Number.parseInt(limit, 10) || 20, 1), maxLimit)
+    return { page: safePage, limit: safeLimit }
+}
 
 class BillingInvoiceService {
     static isTransactionFallbackError(error) {
@@ -171,6 +195,7 @@ class BillingInvoiceService {
         }
 
         return this.runWithOptionalTransaction(async (session) => {
+            const userIds = await ShopUtils.getShopUserIds(userId)
             const invoiceNumber = await this.generateInvoiceNumber(session)
 
             let subtotal = 0
@@ -180,10 +205,10 @@ class BillingInvoiceService {
             const requestedQtyByProduct = buildRequestedQuantityMap(data.items, 'product')
             const productIds = Object.keys(requestedQtyByProduct)
             const productQuery = BillingProduct.find({
-                user: userId,
+                user: { $in: userIds },
                 isActive: true,
                 _id: { $in: productIds }
-            }).select('_id name barcode purchasePrice stock')
+            }).select('_id name barcode purchasePrice stock mrp')
             const productsInfo = await withOptionalSession(productQuery, session)
             const productMap = buildProductMap(productsInfo)
 
@@ -213,6 +238,7 @@ class BillingInvoiceService {
                 const productId = String(item.product)
                 const product = productMap.get(productId)
                 const quantity = Number(item.quantity) || 0
+                const requestedMrp = Number(item.mrp)
                 const price = Number(item.price) || 0
                 const gstPercent = Number(item.gstPercent) || 0
 
@@ -232,6 +258,7 @@ class BillingInvoiceService {
                 const gstAmount = (lineSubtotal * gstPercent) / 100
                 const lineTotal = lineSubtotal
                 const purchasePrice = product.purchasePrice || 0
+                const mrp = Number.isFinite(requestedMrp) ? requestedMrp : (Number(product.mrp) || 0)
                 const itemProfit = (price - purchasePrice) * quantity
 
                 subtotal += lineSubtotal
@@ -242,6 +269,7 @@ class BillingInvoiceService {
                     product: product._id,
                     name: item.name || product.name,
                     barcode: item.barcode || product.barcode || '',
+                    mrp,
                     quantity,
                     price,
                     gstPercent,
@@ -271,7 +299,7 @@ class BillingInvoiceService {
 
             if (!customerId && finalCustomerPhone) {
                 const customerQuery = BillingCustomer.findOne({
-                    user: userId,
+                    user: { $in: userIds },
                     phone: finalCustomerPhone
                 })
                 const existingCustomer = await withOptionalSession(customerQuery, session)
@@ -298,7 +326,7 @@ class BillingInvoiceService {
                     customerSyncEvent = this.buildCustomerEvent(newCustomer, 'create')
                 }
             } else if (customerId) {
-                const customerQuery = BillingCustomer.findOne({ _id: customerId, user: userId })
+                const customerQuery = BillingCustomer.findOne({ _id: customerId, user: { $in: userIds } })
                 const existingCustomer = await withOptionalSession(customerQuery, session)
                 if (!existingCustomer) {
                     throw new ApiError(httpStatus.NOT_FOUND, "Customer not found")
@@ -334,7 +362,7 @@ class BillingInvoiceService {
                 const updatedProduct = await BillingProduct.findOneAndUpdate(
                     {
                         _id: productId,
-                        user: userId,
+                        user: { $in: userIds },
                         stock: { $gte: quantity }
                     },
                     { $inc: { stock: -quantity } },
@@ -362,7 +390,7 @@ class BillingInvoiceService {
                 syncEvents.unshift(customerSyncEvent)
             }
 
-            await SyncService.enqueueMany(userId, syncEvents, {
+            await enqueueManySafely(userId, syncEvents, {
                 session,
                 touchState: true
             })
@@ -381,13 +409,16 @@ class BillingInvoiceService {
     }
 
     static async getAll(userId, { page = 1, limit = 20, query = '', startDate, endDate }) {
-        const filter = { user: userId }
+        const pagination = normalizePagination(page, limit)
+        const userIds = await ShopUtils.getShopUserIds(userId)
+        const filter = { user: { $in: userIds } }
+        const escapedQuery = query ? escapeRegex(query.trim()) : ''
 
-        if (query) {
+        if (escapedQuery) {
             filter.$or = [
-                { invoiceNumber: { $regex: query, $options: 'i' } },
-                { customerName: { $regex: query, $options: 'i' } },
-                { customerPhone: { $regex: query, $options: 'i' } }
+                { invoiceNumber: { $regex: escapedQuery, $options: 'i' } },
+                { customerName: { $regex: escapedQuery, $options: 'i' } },
+                { customerPhone: { $regex: escapedQuery, $options: 'i' } }
             ]
         }
 
@@ -401,22 +432,24 @@ class BillingInvoiceService {
             }
         }
 
-        const skip = (page - 1) * limit
+        const skip = (pagination.page - 1) * pagination.limit
         const [invoices, total] = await Promise.all([
-            BillingInvoice.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+            BillingInvoice.find(filter).sort({ createdAt: -1 }).skip(skip).limit(pagination.limit),
             BillingInvoice.countDocuments(filter)
         ])
 
-        return { invoices, total, page, totalPages: Math.ceil(total / limit) }
+        return { invoices, total, page: pagination.page, totalPages: Math.ceil(total / pagination.limit) || 1 }
     }
 
     static async getById(userId, id) {
-        return BillingInvoice.findOne({ _id: id, user: userId })
+        const userIds = await ShopUtils.getShopUserIds(userId)
+        return BillingInvoice.findOne({ _id: id, user: { $in: userIds } })
             .populate('customer', 'name phone email')
     }
 
     static async getDashboardStats(userId) {
-        const userObjectId = new mongoose.Types.ObjectId(userId)
+        const userIds = await ShopUtils.getShopUserIds(userId)
+        const objectIds = userIds.map(id => new mongoose.Types.ObjectId(id))
         const now = new Date()
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
         const startOfYesterday = new Date(startOfToday)
@@ -433,7 +466,7 @@ class BillingInvoiceService {
 
         const stats = await Promise.all(periods.map(async (period) => {
             const match = {
-                user: userObjectId,
+                user: { $in: objectIds },
                 createdAt: { $gte: period.start, $lte: period.end }
             }
 
@@ -460,18 +493,19 @@ class BillingInvoiceService {
             }
         }))
 
-        const totalInvoices = await BillingInvoice.countDocuments({ user: userObjectId })
+        const totalInvoices = await BillingInvoice.countDocuments({ user: { $in: objectIds } })
         return { stats, totalInvoices }
     }
 
     static async getReportData(userId, startDate, endDate) {
-        const userObjectId = new mongoose.Types.ObjectId(userId)
+        const userIds = await ShopUtils.getShopUserIds(userId)
+        const objectIds = userIds.map(id => new mongoose.Types.ObjectId(id))
         const start = new Date(startDate)
         const end = new Date(endDate)
         end.setHours(23, 59, 59, 999)
 
         const baseMatch = {
-            user: userObjectId,
+            user: { $in: objectIds },
             createdAt: { $gte: start, $lte: end }
         }
 
@@ -495,7 +529,7 @@ class BillingInvoiceService {
             : 0
 
         const [lifetimeSummary] = await BillingInvoice.aggregate([
-            { $match: { user: userObjectId } },
+            { $match: { user: { $in: objectIds } } },
             {
                 $group: {
                     _id: null,
@@ -579,8 +613,9 @@ class BillingInvoiceService {
     }
 
     static async updatePayment(userId, id, { paymentMode, paymentStatus }) {
+        const userIds = await ShopUtils.getShopUserIds(userId)
         const invoice = await BillingInvoice.findOneAndUpdate(
-            { _id: id, user: userId },
+            { _id: id, user: { $in: userIds } },
             { paymentMode, paymentStatus, syncState: 'pending' },
             { new: true }
         )
@@ -594,7 +629,7 @@ class BillingInvoiceService {
                 `Updated payment for ${invoice.invoiceNumber}: ${paymentStatus} via ${paymentMode}`
             )
 
-            await SyncService.enqueue(userId, {
+            await enqueueSafely(userId, {
                 entityType: 'sale',
                 entityId: invoice._id,
                 operation: 'update',
@@ -625,7 +660,8 @@ class BillingInvoiceService {
         }
 
         return this.runWithOptionalTransaction(async (session) => {
-            const invoiceQuery = BillingInvoice.findOne({ _id: id, user: userId })
+            const userIds = await ShopUtils.getShopUserIds(userId)
+            const invoiceQuery = BillingInvoice.findOne({ _id: id, user: { $in: userIds } })
             const invoice = await withOptionalSession(invoiceQuery, session)
             if (!invoice) {
                 throw new ApiError(httpStatus.NOT_FOUND, "Invoice not found")
@@ -641,7 +677,7 @@ class BillingInvoiceService {
 
             const productIds = [...new Set(itemsToReturn.map((item) => String(item.productId || '')))]
             const productsQuery = BillingProduct.find({
-                user: userId,
+                user: { $in: userIds },
                 _id: { $in: productIds }
             }).select('_id name purchasePrice')
             const productsInfo = await withOptionalSession(productsQuery, session)
@@ -685,7 +721,7 @@ class BillingInvoiceService {
                 invoiceItem.profit = (invoiceItem.profit || 0) - itemProfitToRefund
 
                 await BillingProduct.findOneAndUpdate(
-                    { _id: productId, user: userId },
+                    { _id: productId, user: { $in: userIds } },
                     { $inc: { stock: quantity } },
                     session ? { session } : {}
                 )
@@ -760,7 +796,7 @@ class BillingInvoiceService {
                 ...inventorySyncEvents
             ]
 
-            await SyncService.enqueueMany(userId, syncEvents, {
+            await enqueueManySafely(userId, syncEvents, {
                 session,
                 touchState: true
             })
@@ -784,7 +820,8 @@ class BillingInvoiceService {
         }
 
         return this.runWithOptionalTransaction(async (session) => {
-            const invoiceQuery = BillingInvoice.findOne({ _id: id, user: userId })
+            const userIds = await ShopUtils.getShopUserIds(userId)
+            const invoiceQuery = BillingInvoice.findOne({ _id: id, user: { $in: userIds } })
             const invoice = await withOptionalSession(invoiceQuery, session)
             if (!invoice) {
                 throw new ApiError(httpStatus.NOT_FOUND, "Invoice not found")
@@ -806,10 +843,10 @@ class BillingInvoiceService {
             const requestedQtyByProduct = buildRequestedQuantityMap(normalizedItems, 'product')
             const productIds = Object.keys(requestedQtyByProduct)
             const productsQuery = BillingProduct.find({
-                user: userId,
+                user: { $in: userIds },
                 isActive: true,
                 _id: { $in: productIds }
-            }).select('_id name barcode purchasePrice stock')
+            }).select('_id name barcode purchasePrice stock mrp')
             const productsInfo = await withOptionalSession(productsQuery, session)
             const productMap = buildProductMap(productsInfo)
 
@@ -839,6 +876,7 @@ class BillingInvoiceService {
                 const productId = String(reqItem.product)
                 const product = productMap.get(productId)
                 const quantity = Number(reqItem.quantity) || 0
+                const requestedMrp = Number(reqItem.mrp)
                 const price = Number(reqItem.price) || 0
                 const gstPercent = Number(reqItem.gstPercent) || 0
 
@@ -854,6 +892,7 @@ class BillingInvoiceService {
                 const gstAmount = (lineSubtotal * gstPercent) / 100
                 const lineTotal = lineSubtotal + gstAmount
                 const purchasePrice = product.purchasePrice || 0
+                const mrp = Number.isFinite(requestedMrp) ? requestedMrp : (Number(product.mrp) || 0)
                 const addedItemProfit = (price - purchasePrice) * quantity
 
                 additionalSubtotal += lineSubtotal
@@ -863,6 +902,9 @@ class BillingInvoiceService {
                 const existingItemIndex = invoice.items.findIndex((item) => item.product.toString() === productId)
                 if (existingItemIndex > -1) {
                     invoice.items[existingItemIndex].quantity += quantity
+                    if (!invoice.items[existingItemIndex].mrp && mrp) {
+                        invoice.items[existingItemIndex].mrp = mrp
+                    }
                     invoice.items[existingItemIndex].gstAmount += gstAmount
                     invoice.items[existingItemIndex].lineTotal += lineTotal
                     invoice.items[existingItemIndex].profit = (invoice.items[existingItemIndex].profit || 0) + addedItemProfit
@@ -874,6 +916,7 @@ class BillingInvoiceService {
                         product: product._id,
                         name: reqItem.name || product.name,
                         barcode: reqItem.barcode || product.barcode || '',
+                        mrp,
                         quantity,
                         price,
                         gstPercent,
@@ -902,7 +945,7 @@ class BillingInvoiceService {
                 const updatedProduct = await BillingProduct.findOneAndUpdate(
                     {
                         _id: productId,
-                        user: userId,
+                        user: { $in: userIds },
                         stock: { $gte: quantity }
                     },
                     { $inc: { stock: -quantity } },
@@ -969,7 +1012,7 @@ class BillingInvoiceService {
                 ...inventoryEvents
             ]
 
-            await SyncService.enqueueMany(userId, syncEvents, {
+            await enqueueManySafely(userId, syncEvents, {
                 session,
                 touchState: true
             })
@@ -997,7 +1040,8 @@ class BillingInvoiceService {
      */
     static async voidInvoice(userId, id) {
         return this.runWithOptionalTransaction(async (session) => {
-            const invoiceQuery = BillingInvoice.findOne({ _id: id, user: userId })
+            const userIds = await ShopUtils.getShopUserIds(userId)
+            const invoiceQuery = BillingInvoice.findOne({ _id: id, user: { $in: userIds } })
             const invoice = await withOptionalSession(invoiceQuery, session)
             if (!invoice) {
                 throw new ApiError(httpStatus.NOT_FOUND, "Invoice not found")
@@ -1021,7 +1065,7 @@ class BillingInvoiceService {
                 }
 
                 await BillingProduct.findOneAndUpdate(
-                    { _id: item.product, user: userId },
+                    { _id: item.product, user: { $in: userIds } },
                     { $inc: { stock: restoreQty } },
                     session ? { session } : {}
                 )
@@ -1082,7 +1126,7 @@ class BillingInvoiceService {
                 ...inventorySyncEvents
             ]
 
-            await SyncService.enqueueMany(userId, syncEvents, {
+            await enqueueManySafely(userId, syncEvents, {
                 session,
                 touchState: true
             })
@@ -1101,14 +1145,16 @@ class BillingInvoiceService {
     }
 
     static async getByCustomer(userId, customerId) {
-        return BillingInvoice.find({ user: userId, customer: customerId })
+        const userIds = await ShopUtils.getShopUserIds(userId)
+        return BillingInvoice.find({ user: { $in: userIds }, customer: customerId })
             .sort({ createdAt: -1 })
             .limit(50)
             .select('invoiceNumber grandTotal paymentMode paymentStatus createdAt items discount')
     }
     static async deleteInvoice(userId, id) {
         return this.runWithOptionalTransaction(async (session) => {
-            const invoiceQuery = BillingInvoice.findOne({ _id: id, user: userId })
+            const userIds = await ShopUtils.getShopUserIds(userId)
+            const invoiceQuery = BillingInvoice.findOne({ _id: id, user: { $in: userIds } })
             const invoice = await withOptionalSession(invoiceQuery, session)
             
             if (!invoice) {
@@ -1125,7 +1171,7 @@ class BillingInvoiceService {
                 }
 
                 await BillingProduct.findOneAndUpdate(
-                    { _id: item.product, user: userId },
+                    { _id: item.product, user: { $in: userIds } },
                     { $inc: { stock: restoreQty } },
                     session ? { session } : {}
                 )
@@ -1156,7 +1202,7 @@ class BillingInvoiceService {
             const deletedInvoiceNumber = invoice.invoiceNumber
             const deletedGrandTotal = invoice.grandTotal
 
-            await BillingInvoice.deleteOne({ _id: id, user: userId }, session ? { session } : {})
+            await BillingInvoice.deleteOne({ _id: id, user: { $in: userIds } }, session ? { session } : {})
 
             const syncEvents = [
                 {
@@ -1178,7 +1224,7 @@ class BillingInvoiceService {
                 ...inventorySyncEvents
             ]
 
-            await SyncService.enqueueMany(userId, syncEvents, {
+            await enqueueManySafely(userId, syncEvents, {
                 session,
                 touchState: true
             })

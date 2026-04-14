@@ -1,0 +1,172 @@
+[
+  {
+    "collection": "billingproducts",
+    "document": {
+      "_id": "69ccc87b3a1da889f9e23b33",
+      "user": "699dfec5e5b48fb76f7188e8",
+      "barcode": "8909106049703",
+      "name": "FAIR &LOVELY RE-NEW BRIGHT 110G",
+      "category": "Beauty product",
+      "purchasePrice": 228,
+      "mrp": 325,
+      "sellingPrice": 292,
+      "cardPrice": 236,
+      "gstPercent": 5,
+      "stock": 29,
+      "lowStockThreshold": 5,
+      "isActive": true,
+      "cloudVersion": 0,
+      "sourceUpdatedAt": null,
+      "createdAt": "2026-04-01T07:25:47.439Z",
+      "updatedAt": "2026-04-01T07:25:47.439Z",
+      "__v": 0
+    }
+  },
+  {
+    "collection": "billingproducts",
+    "document": {
+      "_id": "69cf76332388d39d0bd4c314",
+      "user": "699dfec5e5b48fb76f7188e8",
+      "barcode": "8909106013445",
+      "name": "Fair& Lovely F/W",
+      "category": "Personal care",
+      "purchasePrice": 65.86,
+      "mrp": 89,
+      "sellingPrice": 85,
+      "cardPrice": 79,
+      "gstPercent": 18,
+      "stock": 10,
+      "lowStockThreshold": 5,
+      "isActive": true,
+      "cloudVersion": 0,
+      "sourceUpdatedAt": null,
+      "createdAt": "2026-04-03T08:11:31.819Z",
+      "updatedAt": "2026-04-03T08:11:31.819Z",
+      "__v": 0
+    }
+  },
+  {
+    "collection": "syncoutboxes",
+    "document": {
+      "_id": "69ccc87b3a1da889f9e23b37",
+      "eventId": "49da8581-70d7-4955-a803-fcc833fd3023",
+      "user": "699dfec5e5b48fb76f7188e8",
+      "entityType": "product",
+      "entityId": "69ccc87b3a1da889f9e23b33",
+      "operation": "create",
+      "sourceModule": "billing",
+      "payload": {
+        "productId": "69ccc87b3a1da889f9e23b33",
+        "name": "FAIR &LOVELY RE-NEW BRIGHT 110G",
+        "barcode": "8909106049703",
+        "category": "Beauty product",
+        "purchasePrice": 228,
+        "mrp": 325,
+        "sellingPrice": 292,
+        "cardPrice": 236,
+        "gstPercent": 5,
+        "stock": 29,
+        "lowStockThreshold": 5,
+        "isActive": true,
+        "updatedAt": "2026-04-01T07:25:47.439Z"
+      },
+      "status": "pending",
+      "retryCount": 0,
+      "lockedAt": null,
+      "syncedAt": null,
+      "lastError": null,
+      "metadata": {
+        "localOnly": true,
+        "syncVersion": 1
+      },
+      "nextRetryAt": "2026-04-01T07:25:47.753Z",
+      "createdAt": "2026-04-01T07:25:47.753Z",
+      "updatedAt": "2026-04-01T07:25:47.753Z",
+      "__v": 0
+    }
+  },
+  {
+    "collection": "syncoutboxes",
+    "document": {
+      "_id": "69cf76332388d39d0bd4c318",
+      "eventId": "978b29fd-68e7-4106-b77d-bce32b37b473",
+      "user": "699dfec5e5b48fb76f7188e8",
+      "entityType": "product",
+      "entityId": "69cf76332388d39d0bd4c314",
+      "operation": "create",
+      "sourceModule": "billing",
+      "payload": {
+        "productId": "69cf76332388d39d0bd4c314",
+        "name": "Fair& Lovely F/W",
+        "barcode": "8909106013445",
+        "category": "Personal care",
+        "purchasePrice": 65.86,
+        "mrp": 89,
+        "sellingPrice": 85,
+        "cardPrice": 79,
+        "gstPercent": 18,
+        "stock": 10,
+        "lowStockThreshold": 5,
+        "isActive": true,
+        "updatedAt": "2026-04-03T08:11:31.819Z"
+      },
+      "status": "pending",
+      "retryCount": 0,
+      "lockedAt": null,
+      "syncedAt": null,
+      "lastError": null,
+      "metadata": {
+        "localOnly": true,
+        "syncVersion": 1
+      },
+      "nextRetryAt": "2026-04-03T08:11:31.929Z",
+      "createdAt": "2026-04-03T08:11:31.929Z",
+      "updatedAt": "2026-04-03T08:11:31.929Z",
+      "__v": 0
+    }
+  },
+  {
+    "collection": "users",
+    "document": {
+      "_id": "69c13ff99e3b8ea83c2004f9",
+      "name": "Love",
+      "email": "love@shop.com",
+      "password": "$2a$10$NvNoef.drHLREdvu1gBqE.F7/17UeY3AAmRLS/7CKSvYDevBkO28y",
+      "role": "warehouse_staff",
+      "shopId": "69c0fd381a17d5524af8b6aa",
+      "createdAt": "2026-03-23T13:28:25.502Z",
+      "updatedAt": "2026-03-23T13:28:25.502Z",
+      "__v": 0
+    }
+  },
+  {
+    "collection": "activitylogs",
+    "document": {
+      "_id": "69ccc87b3a1da889f9e23b35",
+      "user": "699dfec5e5b48fb76f7188e8",
+      "action": "CREATE",
+      "entity": "BillingProduct",
+      "entityId": "69ccc87b3a1da889f9e23b33",
+      "details": "Created product: FAIR &LOVELY RE-NEW BRIGHT 110G",
+      "performedBy": "699dfec5e5b48fb76f7188e8",
+      "createdAt": "2026-04-01T07:25:47.644Z",
+      "updatedAt": "2026-04-01T07:25:47.644Z",
+      "__v": 0
+    }
+  },
+  {
+    "collection": "activitylogs",
+    "document": {
+      "_id": "69cf76332388d39d0bd4c316",
+      "user": "699dfec5e5b48fb76f7188e8",
+      "action": "CREATE",
+      "entity": "BillingProduct",
+      "entityId": "69cf76332388d39d0bd4c314",
+      "details": "Created product: Fair& Lovely F/W",
+      "performedBy": "699dfec5e5b48fb76f7188e8",
+      "createdAt": "2026-04-03T08:11:31.889Z",
+      "updatedAt": "2026-04-03T08:11:31.889Z",
+      "__v": 0
+    }
+  }
+]
