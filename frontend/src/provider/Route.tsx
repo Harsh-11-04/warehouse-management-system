@@ -144,6 +144,7 @@ export const Routes = createBrowserRouter([
                 path: '/purchase-orders',
                 element: <RoleGuard allowedRoles={['admin', 'manager']}><PurchaseOrdersPage /></RoleGuard>
             },
+
             {
                 path: '*',
                 Component: ErrorPage

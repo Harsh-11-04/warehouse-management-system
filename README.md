@@ -57,18 +57,17 @@ This is a zero-install **Portable Executable**. You can put this on a USB drive,
 The Desktop App relies on the `.env` file located in the `backend/` directory. **Ensure your `.env` is correctly configured BEFORE building the `.exe`.**
 
 ### Connecting to the Database
+Copy `backend/.env.example` to `backend/.env` and fill in your actual values:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
 If your `backend/.env` has `MONGO_URI` pointing to **MongoDB Atlas**, the Cashier PC will act as an "Always Online" cloud checkout terminal. 
 
-If you want the Cashier PC to be "Offline-First", you must point `MONGO_URI` to `mongodb://127.0.0.1:27017/jattkart` and enable your background Sync Worker.
+If you want the Cashier PC to be "Offline-First", you must point `MONGO_URI` to a local MongoDB instance and enable your background Sync Worker.
 
-```env
-# backend/.env 
-PORT=5000
-NODE_ENV=development
-
-# Cloud Database
-MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/?appName=Jaat-Canteen
-```
+> ⚠️ **Never commit real credentials.** See `backend/.env.example` for the template.
 
 ---
 

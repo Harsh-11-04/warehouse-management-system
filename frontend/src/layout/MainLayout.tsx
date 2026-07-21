@@ -57,6 +57,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
               <MenuItem component={<Link to="/billing" />} icon={<RiMoneyDollarCircleLine className="text-2xl" />}>Go to Billing</MenuItem>
             )}
 
+
             {canViewReports && (
               <>
                 <MenuItem component={<Link to="/reports" />} icon={<TbReportAnalytics className="text-2xl" />}> Reports </MenuItem>
